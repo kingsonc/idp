@@ -13,10 +13,13 @@ cv.createTrackbar('S_max','feed',0,255,empty_callback)
 cv.createTrackbar('V_min','feed',0,255,empty_callback)
 cv.createTrackbar('V_max','feed',0,255,empty_callback)
 
-cap = cv.VideoCapture(0)
+cap = cv.VideoCapture(cv.CAP_DSHOW + 1)
+cap.set(cv.CAP_PROP_FRAME_WIDTH, 1600)
+cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1200)
 
 while(True):
     ret, frame = cap.read()
+    print(frame.shape)
 
     h_min = cv.getTrackbarPos('H_min','feed')
     h_max = cv.getTrackbarPos('H_max','feed')
