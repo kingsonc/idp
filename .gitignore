@@ -1,3 +1,6 @@
 __pycache__/
 *.py[cod]
 *env
+
+# Directory with sample images/videos for testing purposes
+test_files/
