@@ -27,6 +27,9 @@ cv2.resizeWindow('feed', 1200,600)
 # For writing coordinate text overlay
 font = cv2.FONT_HERSHEY_SIMPLEX
 
+# Kernel for image convolution
+kernel = np.ones((7,7),np.uint8)
+
 def print_map_coords(cx, cy):
     """ Converts image coordinates into table coordinates in cm
     """
@@ -52,14 +55,14 @@ while(cap.isOpened()):
     dst = cv2.warpAffine(dst,rotation_M,(cols,rows))
 
     # Gaussian blur to remove noise
-    dst = cv2.GaussianBlur(dst,(5,5),0)
+    dst = cv2.GaussianBlur(dst,(7,7),0)
 
     # Convert to HSV colourspace for colour thresholding
     hsv = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
 
     # # Upper and lower HSV bounds
-    lower_thresh = np.array([95, 100, 100])
-    upper_thresh = np.array([110, 255, 255])
+    lower_thresh = np.array([85, 60, 210])
+    upper_thresh = np.array([120, 255, 255])
 
     # Obtain mask of fiters
     mask = cv2.inRange(hsv, lower_thresh, upper_thresh)
@@ -67,20 +70,25 @@ while(cap.isOpened()):
     # Apply mask to original image
     masked = cv2.bitwise_and(dst, dst, mask=mask)
 
-    # Convert frame to grayscale and find object contours
+    # Convert frame to grayscale
     gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
+
+    # Erosion -> Dilation to remove noise and fill holes
+    gray = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel)
+
+    # Find contours
     contours, hierarchy = cv2.findContours(gray, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # Overlay contours onto image
-    cv2.drawContours(masked, contours, -1, (0,255,0), 3)
+    cv2.drawContours(masked, contours, -1, (0,255,0), 2)
 
     # Calculate centre of mass for each contour found
     for contour in contours:
         M = cv2.moments(contour)
         area = cv2.contourArea(contour)
 
-        if area < 100:
-            continue
+        # if area < 10:
+        #     continue
 
         # Sometimes m00 is zero (?)
         if M['m00'] != 0:
@@ -88,8 +96,8 @@ while(cap.isOpened()):
             cy = int(M['m01']/M['m00'])
 
             # Draw crosshair in centre of contours
-            cv2.line(masked, (cx-15, cy-15), (cx+15, cy+15), (0,0,255), 5)
-            cv2.line(masked, (cx-15, cy+15), (cx+15, cy-15), (0,0,255), 5)
+            cv2.line(masked, (cx-10, cy-10), (cx+10, cy+10), (0,0,255), 5)
+            cv2.line(masked, (cx-10, cy+10), (cx+10, cy-10), (0,0,255), 5)
 
             # Overlay coordinates text
             cv2.putText(masked, print_map_coords(cx,cy), (cx-120,cy+50), \

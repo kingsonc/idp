@@ -4,7 +4,10 @@ import cv2 as cv
 def empty_callback(e):
     pass
 
-cv.namedWindow('feed')
+cv.namedWindow('feed', cv.WINDOW_NORMAL)
+
+cv.namedWindow('filtered', cv.WINDOW_NORMAL)
+cv.resizeWindow('filtered', 600,300)
 
 cv.createTrackbar('H_min','feed',0,179,empty_callback)
 cv.createTrackbar('H_max','feed',0,179,empty_callback)
@@ -19,7 +22,6 @@ cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1200)
 
 while(True):
     ret, frame = cap.read()
-    print(frame.shape)
 
     h_min = cv.getTrackbarPos('H_min','feed')
     h_max = cv.getTrackbarPos('H_max','feed')
@@ -36,7 +38,7 @@ while(True):
     mask = cv.inRange(hsv, lower_thresh, upper_thresh)
     final = cv.bitwise_and(frame, frame, mask=mask)
 
-    cv.imshow('feed', frame)
+    cv.imshow('feed', np.zeros((10,10,3), np.uint8))
     cv.imshow('filtered', final)
 
     if cv.waitKey(1) & 0xFF == ord('q'):
