@@ -7,7 +7,7 @@ Test script to find coordinates of fuel cells in video.
 import numpy as np
 import cv2
 
-USE_LIVE_CAM = True
+USE_LIVE_CAM = False
 
 if USE_LIVE_CAM:
     cap = cv2.VideoCapture(cv2.CAP_DSHOW + 1)
@@ -16,6 +16,15 @@ if USE_LIVE_CAM:
 else:
     # Open sample video
     cap = cv2.VideoCapture('test_files/table3_sample.wmv')
+
+# Upper and lower HSV bounds (LIGHTING TESTS NEEDED)
+# might work better with V at a higher number? (210ish)
+lower_thresh = np.array([85, 60, 100])
+upper_thresh = np.array([120, 255, 255])
+
+# Coordinates for perspective transform
+camera_pts = np.float32([[1417,1393],[1466,606],[10,495],[4,999]])
+map_pts = np.float32([[1425,1395],[1473,604],[0,482],[0,977]])
 
 # Create output video
 # fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -32,6 +41,7 @@ kernel = np.ones((7,7),np.uint8)
 
 def print_map_coords(cx, cy):
     """ Converts image coordinates into table coordinates in cm
+    Note: the post-processed camera feed has a resolution of 1473*1473
     """
     x_cm = round(cx*240/1473, 2)
     y_cm = round((1473-cy)*240/1473, 2)
@@ -44,9 +54,7 @@ while(cap.isOpened()):
     # Perspective transform. See perspective_transform.py
     dst = frame[:,55:1528]
     dst = cv2.copyMakeBorder(dst,199,74,0,0,cv2.BORDER_CONSTANT, value=[0,0,0])
-    pts1 = np.float32([[1417,1393],[1466,606],[10,495],[4,999]])
-    pts2 = np.float32([[1425,1395],[1473,604],[0,482],[0,977]])
-    M = cv2.getPerspectiveTransform(pts1,pts2)
+    M = cv2.getPerspectiveTransform(camera_pts,map_pts)
     dst = cv2.warpPerspective(dst,M,(1473,1473))
 
     # Rotate image clockwise 90 deg
@@ -60,20 +68,16 @@ while(cap.isOpened()):
     # Convert to HSV colourspace for colour thresholding
     hsv = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
 
-    # # Upper and lower HSV bounds
-    lower_thresh = np.array([85, 60, 210])
-    upper_thresh = np.array([120, 255, 255])
-
     # Obtain mask of fiters
     mask = cv2.inRange(hsv, lower_thresh, upper_thresh)
 
     # Apply mask to original image
     masked = cv2.bitwise_and(dst, dst, mask=mask)
 
-    # Convert frame to grayscale
+    # Convert frame to grayscale for contour search
     gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
 
-    # Erosion -> Dilation to remove noise and fill holes
+    # Erosion -> Dilation to remove noise and fill holes (Morphological opening)
     gray = cv2.morphologyEx(gray, cv2.MORPH_OPEN, kernel)
 
     # Find contours
@@ -82,13 +86,9 @@ while(cap.isOpened()):
     # Overlay contours onto image
     cv2.drawContours(masked, contours, -1, (0,255,0), 2)
 
-    # Calculate centre of mass for each contour found
+    # Calculate centre of each contour found using image moments
     for contour in contours:
         M = cv2.moments(contour)
-        area = cv2.contourArea(contour)
-
-        # if area < 10:
-        #     continue
 
         # Sometimes m00 is zero (?)
         if M['m00'] != 0:
@@ -101,7 +101,7 @@ while(cap.isOpened()):
 
             # Overlay coordinates text
             cv2.putText(masked, print_map_coords(cx,cy), (cx-120,cy+50), \
-                        font, 1, (100,0,255),2,cv2.LINE_AA)
+                        font, 1, (100,0,255), 2, cv2.LINE_AA)
 
     # Combine original and masked w/ contours frames
     overall = np.hstack((masked,dst))
