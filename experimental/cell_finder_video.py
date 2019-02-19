@@ -7,12 +7,19 @@ Test script to find coordinates of fuel cells in video.
 import numpy as np
 import cv2
 
-# Open sample video
-cap = cv2.VideoCapture('test_files/table3_sample.wmv')
+USE_LIVE_CAM = False
+
+if USE_LIVE_CAM:
+    cap = cv.VideoCapture(cv.CAP_DSHOW + 1)
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, 1600)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, 1200)
+else:
+    # Open sample video
+    cap = cv2.VideoCapture('test_files/table3_sample.wmv')
 
 # Create output video
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output2.avi',fourcc, 20.0, (2946,1473))
+# fourcc = cv2.VideoWriter_fourcc(*'XVID')
+# out = cv2.VideoWriter('output2.avi',fourcc, 20.0, (2946,1473))
 
 cv2.namedWindow('feed', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('feed', 1200,600)
@@ -93,7 +100,7 @@ while(cap.isOpened()):
     cv2.imshow('feed', overall)
 
     # Write output to disk
-    out.write(overall)
+    # out.write(overall)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
