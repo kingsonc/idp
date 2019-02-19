@@ -4,3 +4,4 @@ __pycache__/
 
 # Directory with sample images/videos for testing purposes
 test_files/
+*.avi
