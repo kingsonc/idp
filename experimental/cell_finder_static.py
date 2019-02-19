@@ -1,5 +1,5 @@
 """
-Usage: cell_finder.py
+Usage: cell_finder_static.py
 .
 Test script to find coordinates of fuel cells.
 """
