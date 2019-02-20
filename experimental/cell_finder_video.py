@@ -50,6 +50,7 @@ def print_map_coords(cx, cy):
 
 while(cap.isOpened()):
     ret, frame = cap.read()
+    timer = cv2.getTickCount()
 
     # Perspective transform. See perspective_transform.py
     dst = frame[:,55:1528]
@@ -102,6 +103,9 @@ while(cap.isOpened()):
             # Overlay coordinates text
             cv2.putText(masked, print_map_coords(cx,cy), (cx-120,cy+50), \
                         font, 1, (100,0,255), 2, cv2.LINE_AA)
+
+    fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
+    cv2.putText(masked, "FPS: " + str(int(fps)), (100,50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50), 2);
 
     # Combine original and masked w/ contours frames
     overall = np.hstack((masked,dst))
