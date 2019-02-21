@@ -1,4 +1,5 @@
 import cv2
+import beqcuerella.fuelcell as fuelcell
 import beqcuerella.robot as robot
 import beqcuerella.webcam as webcam
 import beqcuerella.vision as vision
@@ -8,6 +9,7 @@ import beqcuerella.vision as vision
 camera = webcam.VideoClip('../test_files/table3_sample.wmv')
 
 beqc = robot.RobotState()
+fctracker = fuelcell.FuelCellsTracker()
 
 frame = camera.read()
 beqc.find_robot(frame)
@@ -18,10 +20,15 @@ while True:
     frame = camera.read()
     frame = vision.cam2map_transform(frame)
     fuelcell_coords = vision.find_fuel_cells(frame)
+    fuelcells = fctracker.update(fuelcell_coords)
+
     robot_coords = beqc.update_tracker(frame)
 
     fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
     print(f"FPS: {fps}")
-    print(f"Fuel cell coords: {fuelcell_coords}")
+    print(f"Fuel cells: {fuelcells}")
     print(f"Robot coords: {robot_coords}")
+
+    for fc in fuelcells.values():
+        print(fc.__dict__)
