@@ -68,10 +68,10 @@ masked = cv2.bitwise_and(frame, frame, mask=mask)
 gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
 
 # Find circle in gray masked frame
-circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20, minRadius=20, maxRadius=60)
+circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 5, param1=50,param2=10,minRadius=0, maxRadius=60)
 print(circles)
 
-x_center, y_center, radius = circles[0]
+x_center, y_center, radius = circles[0,0]
 
 # Region of interest bounding box (xmin, ymin, width, height)
 bbox = (x_center-(radius+20), y_center-(radius+20), 2*(radius+20), 2*(radius+20))
@@ -86,7 +86,7 @@ while True:
     frame = standard_transform(frame)
 
     # Convert to HSV colourspace for colour thresholding
-    hsv = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower_thresh, upper_thresh)
     masked = cv2.bitwise_and(frame, frame, mask=mask)
 
@@ -98,7 +98,7 @@ while True:
         p1 = (int(bbox[0]), int(bbox[1]))
         p2 = (int(bbox[0] + bbox[2]), int(bbox[1]+  bbox[3]))
         cv2.rectangle(frame, p1, p2, (0,0,255), 2, 1)
-        tracked_center = (bbox[0]+bbox[2]/2, bbox[1]+bbox[3]/2)
+        tracked_center = (int(bbox[0]+bbox[2]/2), int(bbox[1]+bbox[3]/2))
         tracked_pts.appendleft(tracked_center)
     else :
         # Cannot find object
@@ -111,15 +111,15 @@ while True:
         cv2.line(frame, tracked_pts[i-1], tracked_pts[i], (0,0,255), 2)
 
     # Calculate orientation based on previous position (from 10 frames back)
-    if len(tracked_pts) >= 10:
-        dx = pts[0][0] - pts[10][0]
-        dy = pts[0][1] - pts[10][1]
+    if len(tracked_pts) > 10:
+        dx = tracked_pts[0][0] - tracked_pts[10][0]
+        dy = tracked_pts[0][1] - tracked_pts[10][1]
 
-        magnitude = math.sqrt(dx**2 + dy**2)
-        dx = dx/magnitude
-        dy = dy/magnitude
+        # magnitude = math.sqrt(dx**2 + dy**2)
+        # dx = int(dx/magnitude)
+        # dy = int(dy/magnitude)
 
-        cv2.arrowedLine(tracked_center, (tracked_center[0]+dx, tracked_center[1]+dy), \
+        cv2.arrowedLine(frame, tracked_center, (tracked_center[0]+dx, tracked_center[1]+dy), \
                         (255,0,0), 4)
 
     # Calculate frame rate
