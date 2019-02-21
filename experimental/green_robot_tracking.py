@@ -19,6 +19,9 @@ if USE_LIVE_CAM:
     cap = cv2.VideoCapture(cv2.CAP_DSHOW + 1)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1600)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1200)
+    cap.set(cv2.CAP_PROP_BRIGHTNESS, 60)
+    cap.set(cv2.CAP_PROP_CONTRAST, 48)
+    cap.set(cv2.CAP_PROP_SATURATION, 70)
 else:
     # Open sample video
     cap = cv2.VideoCapture('test_files/table3_sample.wmv')
@@ -27,8 +30,8 @@ cv2.namedWindow('Tracking', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('Tracking', 1200,600)
 
 # Create output video
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')
-# out = cv2.VideoWriter('output3.avi',fourcc, 20.0, (1600,1200))
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+out = cv2.VideoWriter('output4.avi',fourcc, 20.0, (1473,1473))
 
 # GREEN TAPE
 lower_thresh = np.array([60, 100, 40])
@@ -128,7 +131,7 @@ while True:
                 cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50), 2);
 
     cv2.imshow("Tracking", frame)
-    # out.write(frame)
+    out.write(frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
