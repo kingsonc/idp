@@ -1,3 +1,4 @@
+from collections import deque
 import math
 import cv2
 from config import current_config as config
@@ -17,7 +18,7 @@ class RobotState():
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 10,
                                    param1=50,param2=10,minRadius=15,maxRadius=40)
 
-        if circles[0,0]:
+        if circles.any():
             x_center, y_center, radius = circles[0,0]
             print(f"Begin tracking. Robot found at ({x_center}, {y_center}).")
             # Region of interest bounding box (xmin, ymin, width, height)

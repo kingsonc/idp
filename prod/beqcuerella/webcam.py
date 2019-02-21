@@ -37,6 +37,21 @@ class Webcam:
         self.cam.release()
         return
 
+
+class VideoClip:
+    """Support for simulated run with prerecorded video"""
+    def __init__(self, src):
+        self.cam = cv2.VideoCapture(src)
+
+    def read(self):
+        _, frame = self.cam.read()
+        return frame
+
+    def release(self):
+        self.cam.release()
+        return
+
+
 # class Webcam:
 #     def __init__(self):
 #         self.cam = cv2.VideoCapture(cv2.CAP_DSHOW + 1)

@@ -3,7 +3,10 @@ import beqcuerella.robot as robot
 import beqcuerella.webcam as webcam
 import beqcuerella.vision as vision
 
-camera = webcam.Webcam()
+### Uncomment one of below to choose between live webcam or recorded video
+# camera = webcam.Webcam()
+camera = webcam.VideoClip('../test_files/table3_sample.wmv')
+
 beqc = robot.RobotState()
 
 frame = camera.read()
@@ -15,6 +18,10 @@ while True:
     frame = camera.read()
     frame = vision.cam2map_transform(frame)
     fuelcell_coords = vision.find_fuel_cells(frame)
-    robot_coords = robot.update_tracker(frame)
+    robot_coords = beqc.update_tracker(frame)
 
     fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
+
+    print(f"FPS: {fps}")
+    print(f"Fuel cell coords: {fuelcell_coords}")
+    print(f"Robot coords: {robot_coords}")
