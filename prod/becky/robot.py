@@ -2,7 +2,7 @@ from collections import deque
 import math
 import cv2
 from config import current_config as config
-import beqcuerella.vision as vision
+import becky.vision as vision
 
 class RobotState():
     def __init__(self):

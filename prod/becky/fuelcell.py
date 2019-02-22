@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import numpy as np
 from scipy.spatial import distance
-import beqcuerella.vision as vision
+import becky.vision as vision
 
 class FuelCellsTracker:
     """Allows correlation of fuel cells between frames and persistance of state.

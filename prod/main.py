@@ -1,11 +1,11 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import beqcuerella.fuelcell as fuelcell
-import beqcuerella.robot as robot
-import beqcuerella.webcam as webcam
-import beqcuerella.vision as vision
-import beqcuerella.plotter2 as plotter
+import becky.fuelcell as fuelcell
+import becky.robot as robot
+import becky.webcam as webcam
+import becky.vision as vision
+import becky.plotter2 as plotter
 
 # fourcc = cv2.VideoWriter_fourcc(*'XVID')
 # out = cv2.VideoWriter('output.avi',fourcc, 10.0, (2946,1473))
@@ -17,7 +17,7 @@ cv2.resizeWindow('Camera', 1200,600)
 # camera = webcam.Webcam()
 camera = webcam.VideoClip('../test_files/output1.avi')
 
-beqc = robot.RobotState()
+becky = robot.RobotState()
 fctracker = fuelcell.FuelCellsTracker()
 
 frame = camera.read()
@@ -30,7 +30,7 @@ while True:
     fuelcell_coords = vision.find_fuel_cells(frame)
     fuelcells = fctracker.update(fuelcell_coords)
 
-    robot_coords = beqc.find_robot(frame)
+    robot_coords = becky.find_robot(frame)
 
     # for fc in fuelcells.values():
     #     if fc.visible == True:
@@ -45,7 +45,7 @@ while True:
     # else:
     #     robot_coords_cm = 0
 
-    table_plot = plotter.board_plot(beqc, fctracker.visible_fuelcells())
+    table_plot = plotter.board_plot(becky, fctracker.visible_fuelcells())
     overall = np.hstack((table_plot,frame))
 
     cv2.imshow('Camera', overall)
