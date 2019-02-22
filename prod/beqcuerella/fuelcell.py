@@ -44,6 +44,7 @@ class FuelCellsTracker:
                 # Update fuel cell coords
                 FCID = FCIDs[row]
                 self.fuelcells[FCID].coord = new_coords[col]
+                self.fuelcells[FCID].visible = True
 
                 checked_rows.add(row)
                 checked_cols.add(col)

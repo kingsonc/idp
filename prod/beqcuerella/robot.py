@@ -18,6 +18,8 @@ class RobotState():
 
         if circles.any():
             x_center, y_center, radius = circles[0,0]
+            x_center = int(x_center)
+            y_center = int(y_center)
             print(f"Robot found at ({x_center}, {y_center}).")
 
             self.tracked_pts.appendleft((x_center, y_center))
