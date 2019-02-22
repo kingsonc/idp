@@ -18,7 +18,10 @@ class RobotState():
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 10,
                                    param1=50,param2=10,minRadius=15,maxRadius=40)
 
-        if circles.any():
+        if circles is None:
+            print("Robot not found.")
+            return 0
+        else:
             x_center, y_center, radius = circles[0,0]
             x_center = int(x_center)
             y_center = int(y_center)
@@ -28,9 +31,6 @@ class RobotState():
             self.tracked_pts.appendleft((x_center, y_center))
             self.tracked_pts_cm.appendleft(coords_cm)
             return (x_center, y_center)
-        else:
-            print("Robot not found.")
-            return 0
 
     def update_tracker(self, frame):
         return self.find_robot(frame)

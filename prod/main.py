@@ -34,8 +34,11 @@ while True:
             cv2.putText(frame, "ID: " + str(fc.FCID), (fc.coord[0],fc.coord[1]-15), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50), 2);
 
     if robot_coords:
-            cv2.line(frame, (robot_coords[0]-10, robot_coords[1]-10), (robot_coords[0]+10, robot_coords[1]+10), (0,0,255), 5)
-            cv2.line(frame, (robot_coords[0]-10, robot_coords[1]+10), (robot_coords[0]+10, robot_coords[1]-10), (0,0,255), 5)
+        cv2.line(frame, (robot_coords[0]-10, robot_coords[1]-10), (robot_coords[0]+10, robot_coords[1]+10), (0,0,255), 5)
+        cv2.line(frame, (robot_coords[0]-10, robot_coords[1]+10), (robot_coords[0]+10, robot_coords[1]-10), (0,0,255), 5)
+        robot_coords_cm = vision.map_coord_to_cm(robot_coords)
+    else:
+        robot_coords_cm = 0
 
     cv2.imshow('Camera', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -43,10 +46,9 @@ while True:
 
     fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
-    robot_coords = vision.map_coord_to_cm(robot_coords)
     print(f"FPS: {fps}")
     print(f"Fuel cells: {fuelcells}")
-    print(f"Robot coords: {robot_coords}")
+    print(f"Robot coords: {robot_coords_cm}")
 
     for fc in fuelcells.values():
         print(fc.__dict__)
