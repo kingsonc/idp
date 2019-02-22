@@ -6,8 +6,10 @@ import beqcuerella.vision as vision
 
 class RobotState():
     def __init__(self):
-        self.tracked_pts = deque(maxlen=500)
-        self.tracked_pts_cm = deque(maxlen=500)
+        self.tracked_pts = deque(maxlen=50)
+        self.tracked_pts_cm = deque(maxlen=50)
+        self.last_orientation = -math.pi/2      # Starting orientation
+        self.visible = False
 
     def find_robot(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -15,11 +17,12 @@ class RobotState():
         masked = cv2.bitwise_and(frame, frame, mask=mask)
         gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
 
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 10,
-                                   param1=50,param2=10,minRadius=15,maxRadius=40)
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 30,
+                                   param1=50,param2=15,minRadius=25,maxRadius=35)
 
         if circles is None:
             print("Robot not found.")
+            self.visible = False
             return 0
         else:
             x_center, y_center, radius = circles[0,0]
@@ -27,13 +30,11 @@ class RobotState():
             y_center = int(y_center)
             coords_cm = vision.map_coord_to_cm((x_center,y_center))
             print(f"Robot found at ({coords_cm}).")
+            self.visible = True
 
             self.tracked_pts.appendleft((x_center, y_center))
             self.tracked_pts_cm.appendleft(coords_cm)
             return (x_center, y_center)
-
-    def update_tracker(self, frame):
-        return self.find_robot(frame)
 
     def lastseen_coords(self):
         if self.tracked_pts:
@@ -42,14 +43,20 @@ class RobotState():
             return (0,0)
 
     def orientation(self):
-        if len(tracked_pts) < 10:
-            print("Insufficient data to determine robot orientation.")
-            return None
+        if len(self.tracked_pts) <= 5:
+            return self.last_orientation
 
-        dx = tracked_pts[0][0] - tracked_pts[10][0]
-        dy = tracked_pts[0][1] - tracked_pts[10][1]
+        dx = self.tracked_pts[0][0] - self.tracked_pts[5][0]
+        dy = self.tracked_pts[0][1] - self.tracked_pts[5][1]
 
-        return math.atan2(dy,dx)
+        mag = dx**2 + dy**2
+        if mag < 500:
+            print("Robot not moving")
+            return self.last_orientation
+
+        orientation = math.atan2(dy,dx)
+        self.last_orientation = orientation
+        return orientation
 
 
 # class RobotState():

@@ -66,6 +66,13 @@ class FuelCellsTracker:
 
         return self.fuelcells
 
+    def visible_fuelcells(self):
+        visible_list = []
+        for fuelcell in self.fuelcells.values():
+            if fuelcell.visible == True:
+                visible_list.append(fuelcell)
+        return visible_list
+
 class FuelCell:
     def __init__(self, FCID, coord):
         self.FCID = FCID
