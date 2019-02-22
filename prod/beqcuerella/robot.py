@@ -2,10 +2,12 @@ from collections import deque
 import math
 import cv2
 from config import current_config as config
+import beqcuerella.vision as vision
 
 class RobotState():
     def __init__(self):
         self.tracked_pts = deque(maxlen=500)
+        self.tracked_pts_cm = deque(maxlen=500)
 
     def find_robot(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -20,9 +22,11 @@ class RobotState():
             x_center, y_center, radius = circles[0,0]
             x_center = int(x_center)
             y_center = int(y_center)
-            print(f"Robot found at ({x_center}, {y_center}).")
+            coords_cm = vision.map_coord_to_cm((x_center,y_center))
+            print(f"Robot found at ({coords_cm}).")
 
             self.tracked_pts.appendleft((x_center, y_center))
+            self.tracked_pts_cm.appendleft(coords_cm)
             return (x_center, y_center)
         else:
             print("Robot not found.")

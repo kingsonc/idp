@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import numpy as np
 from scipy.spatial import distance
+import beqcuerella.vision as vision
 
 class FuelCellsTracker:
     """Allows correlation of fuel cells between frames and persistance of state.
@@ -68,8 +69,21 @@ class FuelCellsTracker:
 class FuelCell:
     def __init__(self, FCID, coord):
         self.FCID = FCID
-        self.coord = coord
+        self.map_coord_cm = None
         self.visible = True
         self.radioactive = True
         self.visited = False
         self.pickedUp = False
+
+        self.coord = coord
+
+    @property
+    def coord(self):
+        return self._coord
+
+    @coord.setter
+    def coord(self, coord):
+        self._coord = coord
+        self.map_coord_cm = vision.map_coord_to_cm(coord)
+
+    # def init_coords(coord):

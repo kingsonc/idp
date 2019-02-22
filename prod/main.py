@@ -43,6 +43,7 @@ while True:
 
     fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
+    robot_coords = vision.map_coord_to_cm(robot_coords)
     print(f"FPS: {fps}")
     print(f"Fuel cells: {fuelcells}")
     print(f"Robot coords: {robot_coords}")
