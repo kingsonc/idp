@@ -24,6 +24,8 @@ class Config:
 
 class Table3Config(Config):
     """Specific values only applicable to table 3"""
+    TABLE = 3
+
     CAM_BRIGHTNESS = 60
     CAM_CONTRAST = 48
     CAM_SATURATION = 70

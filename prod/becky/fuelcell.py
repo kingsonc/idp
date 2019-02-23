@@ -46,6 +46,7 @@ class FuelCellsTracker:
                 FCID = FCIDs[row]
                 self.fuelcells[FCID].coord = new_coords[col]
                 self.fuelcells[FCID].visible = True
+                self.fuelcells[FCID].disappearedFor = 0
 
                 checked_rows.add(row)
                 checked_cols.add(col)
@@ -60,6 +61,7 @@ class FuelCellsTracker:
                 for row in unused_rows:
                     FCID = FCIDs[row]
                     self.fuelcells[FCID].visible = False
+                    self.fuelcells[FCID].disappearedFor += 1
             else:
                 for col in unused_cols:
                     self.register(new_coords[col])
@@ -69,7 +71,7 @@ class FuelCellsTracker:
     def visible_fuelcells(self):
         visible_list = []
         for fuelcell in self.fuelcells.values():
-            if fuelcell.visible == True:
+            if fuelcell.visible == True or fuelcell.disappearedFor < 10:
                 visible_list.append(fuelcell)
         return visible_list
 
@@ -78,9 +80,11 @@ class FuelCell:
         self.FCID = FCID
         self.map_coord_cm = None
         self.visible = True
-        self.radioactive = True
+        self.radioactive = None
         self.visited = False
         self.pickedUp = False
+        self.target = False
+        self.disappearedFor = 0
 
         self.coord = coord
 
