@@ -45,6 +45,7 @@ while True:
     if robot_coords:
         if robot_coords[1] < 737:
             arduino.send('MLF255,MRF000,')
+            arduino.send(Motor_L, Motor_R)
         else:
             arduino.send('MLF000,MRF255,')
 
