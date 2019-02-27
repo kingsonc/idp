@@ -13,6 +13,7 @@ Servo propeller;
 
 //define analog beam break input
 int photodiode=A0;
+bool block_in_working_area = false;
 
 //define hall effect pin
 int hall_effect_pin=A1;
@@ -33,23 +34,43 @@ void decoder(String cmd) {
   }
 }
 
+//define slow movement forwards
 void slow_movement() {
     Motor_L->setSpeed(100);
     Motor_R->setSpeed(100);
     Motor_L->run(FORWARD);
     Motor_R->run(FORWARD);
-
 }
 
+//define motor stop
+void stop_motors() {
+  Motor_L->setSpeed(0);
+  Motor_R->setSpeed(0);
+  Motor_L->run(FORWARD);
+  Motor_R->run(FORWARD);
+}
+
+//Beam Break Testing Subroutine
+void beam_break() {
+  int val = analogRead(photodiode);
+  if (val >= 700) {                                   //set threshold
+       Serial.println("There is a block in the way!");
+       block_in_working_area = true;
+  }
+  else {
+        block_in_working_area=false;
+  }
+}
+
+//Hall Effect Testing Subroutine
 void hall_effect() {
-  int threshold = 700
-    int magnetic = analogRead(hall_effect_pin);
-      if (magnetic >= threshold) {
-        is_magnetic = true;
-      }
-      else{
-        is_magnetic = false;
-      }
+  int magnetic = abs(analogRead(hall_effect_pin));
+    if (magnetic >= 700) {                          //set threshold
+      is_magnetic = true;
+    }
+    else {
+      is_magnetic = false;
+    }
 }
 
 //Accept and reject mechanism
@@ -57,12 +78,14 @@ void servo_accept(){
   slow_movement();
   delay(3);                         
   propeller.write(180);              // tell servo to go to 180 ****NEEDS CHANGING***
+  Serial.print("Block Accepted");
 }
 
 void servo_reject() {
   slow_movement();
   delay(3);                         
   propeller.write(0);               // tell servo to go to 0  ****NEEDS CHANGING***
+  Serial.print("Block Rejected");
 }
 
 //Setup and Loop
@@ -75,11 +98,7 @@ void setup() {
 
   //Initialise Motors
   AFMS.begin();
-  Motor_L->setSpeed(0);
-  Motor_R->setSpeed(0);
-  Motor_L->run(FORWARD);
-  Motor_R->run(FORWARD);
-  
+  stop_motors();
   Serial.begin(9600);        //initialise serial
   Serial.write("Arduino is Ready.");
 }
@@ -88,20 +107,17 @@ void loop() {
   //initialise adafruit 
   AFMS.begin();
 
-  //beam break
-  int val = analogRead(photodiode);
-  if (val >= 700) {
-    //run subroutine here
-    Serial.println("There is a block in the way!");
-    //move motors a little
+    //test beam break and hall effect
+    beam_break();
     hall_effect();
-    if (is_magnetic==true) {
+    if (block_in_working_area == true && is_magnetic==true) {
       servo_accept();               //accept block
       is_magnetic = false;          //reset
+      block_in_working_area = false;
     }
-    else if (is_magnetic==false) {
+    else if (block_in_working_area == true && is_magnetic==false) {
       servo_reject();               //reject block
       is_magnetic = false;          //reset
+      block_in_working_area = false;
     }
   }  
-}
