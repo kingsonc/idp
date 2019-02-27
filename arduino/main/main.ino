@@ -3,133 +3,85 @@
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
-// Create the motor shield object with the default I2C address
+// Create the motor shield object and set addresses.
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
-// Select which 'port' M1, M2, M3 or M4. In this case, M1
-Adafruit_DCMotor *Motor_1 = AFMS.getMotor(1);
-// You can also make another motor on port M2
-Adafruit_DCMotor *Motor_2 = AFMS.getMotor(2);
+Adafruit_DCMotor *Motor_L = AFMS.getMotor(1);
+Adafruit_DCMotor *Motor_R = AFMS.getMotor(2);
 
 //Create Servo Object
 Servo propeller;
 
-//define analog photodiode input
+//define analog beam break input
 int photodiode=A0;
 
-//declare variables needed later on
-String rc;
-boolean newData = false;
-int rcv_spd;
-char rcvd_dirn;
-int pos = 0;    // variable to store the servo position
+//define hall effect pin
+int hall_effect_pin=A1;
+bool is_magnetic=false;
 
 //Serial Communications Protocol
 //Print new serial data
-void showNewData() {
-     rcvd_dirn = rc.charAt(0);
-     rc.remove(0,1);
-     rcv_spd = rc.toInt();
-     Serial.println(rcvd_dirn);
-     Serial.println(rcv_spd);
-     newData = false;
+void decoder(String cmd) {
+  if (cmd.charAt(0) == 'M') {
+    int spd = cmd.substring(3,6).toInt(); //slice bits 3-6 from serial (speed)
+     
+     //set motor speeds using commands received from serial
+     if (cmd.charAt(1) == 'L') {
+      Motor_L->setSpeed(spd);
+    } else if (cmd.charAt(1) == 'R'){
+      Motor_R->setSpeed(spd);
+    }      
+  }
 }
 
-// Receive Serial Data
-void recvWithStartEndMarkers() {
-    char startMarker = '<';
-    char endMarker = '>';
-    
-  if (Serial.available() > 0) {
-      rc = Serial.readStringUntil(endMarker);
-      if (rc.charAt(0)== 60){
-        rc.remove(0,1);
-        newData = true;
+void slow_movement() {
+    Motor_L->setSpeed(100);
+    Motor_R->setSpeed(100);
+    Motor_L->run(FORWARD);
+    Motor_R->run(FORWARD);
+
+}
+
+void hall_effect() {
+  int threshold = 700
+    int magnetic = analogRead(hall_effect_pin);
+      if (magnetic >= threshold) {
+        is_magnetic = true;
       }
-  }
+      else{
+        is_magnetic = false;
+      }
 }
 
-//declare functions to move forwards, backwards, left and right turns.
-//Move Forwards
-void forwards(int spd) {
-  //set default speeds
-  Motor_1->setSpeed(spd);
-  Motor_2->setSpeed(spd);
-
-  //move forward
-  Motor_1->run(FORWARD);
-  Motor_2->run(FORWARD);
-  delay(500);
-  
-  Motor_1->run(RELEASE);
-  Motor_2->run(RELEASE);
-}
-
-//Left Turn
-void left_turn(int spd) {
-  //set default speeds
-  Motor_1->setSpeed(spd);
-  Motor_2->setSpeed(spd);
-
-  //turn left
-  Motor_1->run(FORWARD);
-  //Motor_2->run(BACKWARD);
-  delay(500);
-  
-  Motor_1->run(RELEASE);
-  Motor_2->run(RELEASE);
-}
-
-//Right Turn
-void right_turn(int spd) {
-  //set default speeds
-  Motor_1->setSpeed(spd);
-  Motor_2->setSpeed(spd);
-  
-  //turn right
-  //Motor_1->run(BACKWARD);
-  Motor_2->run(FORWARD);
-  delay(500);
-  
-  Motor_1->run(RELEASE);
-  Motor_2->run(RELEASE);
-}
-
-//Reverse
-void reverse(int spd) {
-  //set default speeds
-  Motor_1->setSpeed(spd);
-  Motor_2->setSpeed(spd);
-  
-  //reverse
-  Motor_1->run(BACKWARD);
-  Motor_2->run(BACKWARD);
-  delay(500); //500ms continuous running
-  
-  Motor_1->run(RELEASE);
-  Motor_2->run(RELEASE);
-}
-
+//Accept and reject mechanism
 void servo_accept(){
-  for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-    // in steps of 1 degree
-    propeller.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(3);                       // waits 15ms for the servo to reach the position
-  }
-  for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-    propeller.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(3);                       // waits 15ms for the servo to reach the position
-  }                                 // waits for the servo to get there
+  slow_movement();
+  delay(3);                         
+  propeller.write(180);              // tell servo to go to 180 ****NEEDS CHANGING***
+}
+
+void servo_reject() {
+  slow_movement();
+  delay(3);                         
+  propeller.write(0);               // tell servo to go to 0  ****NEEDS CHANGING***
 }
 
 //Setup and Loop
 void setup() {
-  pinMode(photodiode,INPUT); //initialise photodiode pin input
-  propeller.attach(9);       //initialise servo object
+  //initialise photodiode pin input
+  pinMode(photodiode,INPUT); 
+  
+  //initialise servo object
+  propeller.attach(9);       
+
+  //Initialise Motors
+  AFMS.begin();
+  Motor_L->setSpeed(0);
+  Motor_R->setSpeed(0);
+  Motor_L->run(FORWARD);
+  Motor_R->run(FORWARD);
+  
   Serial.begin(9600);        //initialise serial
-  while (!Serial) {
-   ; // wait for serial port to connect. Needed for native USB port only
-  }
-  Serial.write("Connected!");
+  Serial.write("Arduino is Ready.");
 }
 
 void loop() {
@@ -141,44 +93,15 @@ void loop() {
   if (val >= 700) {
     //run subroutine here
     Serial.println("There is a block in the way!");
-
     //move motors a little
-
-    //hall effect condition !!!!!!!!!!!!!!!!!!
-    //accept 
-    if (hall_effect==1) {
-      servo_accept();  
+    hall_effect();
+    if (is_magnetic==true) {
+      servo_accept();               //accept block
+      is_magnetic = false;          //reset
     }
-
-    //reject
-    else if (hall_effect==0) {
-      //servo_reject();  
+    else if (is_magnetic==false) {
+      servo_reject();               //reject block
+      is_magnetic = false;          //reset
     }
-  }
-  
-  //receive new commands
-  recvWithStartEndMarkers();
-  if (newData == true) {
-      showNewData();
-      //everything else that depends on rc goes here
-      if (rcvd_dirn == 119) { //decimal ascii code for w
-         Serial.println("moving forwards");
-         forwards(rcv_spd);
-      }
-    
-      else if (rcvd_dirn == 115) { //decimal ascii code for s
-         Serial.println("moving backwards");
-         reverse(rcv_spd);
-      }
-    
-      else if (rcvd_dirn == 97) { //decimal ascii for a
-         Serial.println("turning left");
-         left_turn(rcv_spd);
-      }
-    
-      else if (rcvd_dirn == 100) { //decimal ascii for d
-         Serial.println("turning right");
-         right_turn(rcv_spd);
-      }
-  }
+  }  
 }
