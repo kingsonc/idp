@@ -19,12 +19,15 @@ cv2.namedWindow('grid', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('grid', 600,600)
 
 ### Uncomment one of below to choose between live webcam or recorded video
-camera = webcam.Webcam()
-# camera = webcam.VideoClip('../test_files/output1.avi')
+# camera = webcam.Webcam()
+camera = webcam.VideoClip('../test_files/output1.avi')
 
 becky = robot.RobotState()
 fctracker = fuelcell.FuelCellsTracker()
-arduino = comms.Arduino('COM15')
+arduino = comms.ArduinoNC('COM15')
+
+motor_L = comms.Motor("L")
+motor_R = comms.Motor("R")
 
 while True:
     timer = cv2.getTickCount()
@@ -39,24 +42,11 @@ while True:
 
     grid = path_finder.generate_grid(visible_fuelcells)
 
-    # if robot_coords[0] < 737 and robot_coords[1] < 737:
-    #     # arduino.send('LF255 RF0')
-    #     arduino.send('L')
-    # elif robot_coords[0] > 737 and robot_coords[1] < 737:
-    #     # arduino.send('LF0 RF255')
-    #     arduino.send('L')
-    # elif robot_coords[0] < 737 and robot_coords[1] > 737:
-    #     # arduino.send('LR255 RR0')
-    #     arduino.send('L')
-    # elif robot_coords[0] > 737 and robot_coords[1] < 737:
-    #     # arduino.send('LR0 RR255')
-    #     arduino.send('L')
-
     if robot_coords:
         if robot_coords[1] < 737:
-            arduino.send('LF255')
+            arduino.send('MLF255,MRF000,')
         else:
-            arduino.send('RF0')
+            arduino.send('MLF000,MRF255,')
 
     table_plot = plotter.board_plot(becky, visible_fuelcells)
     overall = np.hstack((table_plot,frame))

@@ -96,5 +96,3 @@ class FuelCell:
     def coord(self, coord):
         self._coord = coord
         self.map_coord_cm = vision.map_coord_to_cm(coord)
-
-    # def init_coords(coord):

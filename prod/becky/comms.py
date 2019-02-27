@@ -31,6 +31,7 @@ class Arduino:
                     self.wait_rcv = True
                     self.wait_send = False
 
+
     def send(self, value):
         with self.send_cmds_lock:
             self.send_cmds = value + '.'
@@ -40,6 +41,34 @@ class Arduino:
         self.ser.close()
         self.thread.join()
         return
+
+
+class Motor:
+    def __init__(self, side=None):
+        if side == 'L':
+            self.precmd = "ML"
+        elif side == 'R':
+            self.precmd = "MR"
+
+    @property
+    def direction(self):
+        return self._direction
+
+    @property
+    def speed(self):
+        return self._speed
+
+    @direction.setter
+    def direction(self, value):
+        if self._direction != value:
+            self._direction = value
+            self.updated = True
+
+    @speed.setter
+    def speed(self, value):
+        if self._speed != value:
+            self._speed = value
+            self.updated = True
 
 
 class ArduinoNC:
