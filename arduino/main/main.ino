@@ -111,12 +111,12 @@ void loop() {
     //test beam break and hall effect
     beam_break();
     hall_effect();
-    if (block_in_working_area == true && is_magnetic==true) {
+    if (block_in_working_area == true && is_magnetic==false) {
       servo_accept();               //accept block
       is_magnetic = false;          //reset
       block_in_working_area = false;
     }
-    else if (block_in_working_area == true && is_magnetic==false) {
+    else if (block_in_working_area == true && is_magnetic==true) {
       servo_reject();               //reject block
       is_magnetic = false;          //reset
       block_in_working_area = false;
