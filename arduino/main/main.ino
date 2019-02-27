@@ -64,8 +64,9 @@ void beam_break() {
 
 //Hall Effect Testing Subroutine
 void hall_effect() {
-  int magnetic = abs(analogRead(hall_effect_pin));
-    if (magnetic >= 700) {                          //set threshold
+  int magnetic = analogRead(hall_effect_pin);
+  int threshold = 350-magnetic;
+    if (abs(threshold) >=200) {                          //set threshold
       is_magnetic = true;
     }
     else {
