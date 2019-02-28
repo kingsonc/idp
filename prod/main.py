@@ -1,13 +1,14 @@
+import sys
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+
+import becky.comms as comms
 import becky.fuelcell as fuelcell
+import becky.path_finder as path_finder
+import becky.plotter2 as plotter
 import becky.robot as robot
 import becky.webcam as webcam
 import becky.vision as vision
-import becky.path_finder as path_finder
-import becky.plotter2 as plotter
-import becky.comms as comms
 
 # fourcc = cv2.VideoWriter_fourcc(*'XVID')
 # out = cv2.VideoWriter('output.avi',fourcc, 10.0, (2946,1473))
@@ -24,7 +25,7 @@ camera = webcam.VideoClip('../test_files/output1.avi')
 
 becky = robot.RobotState()
 fctracker = fuelcell.FuelCellsTracker()
-arduino = comms.ArduinoNC('COM15')
+arduino = comms.Arduino('COM15')
 
 motor_L = comms.Motor("L")
 motor_R = comms.Motor("R")
@@ -44,10 +45,15 @@ while True:
 
     if robot_coords:
         if robot_coords[1] < 737:
-            arduino.send('MLF255,MRF000,')
-            arduino.send(Motor_L, Motor_R)
+            motor_L.speed = 255
+            motor_R.speed = 0
+            # arduino.send('MLF255,MRF000,')
         else:
-            arduino.send('MLF000,MRF255,')
+            motor_L.speed = 0
+            motor_R.speed = 255
+            # arduino.send('MLF000,MRF255,')
+
+    arduino.send(motor_L, motor_R)
 
     table_plot = plotter.board_plot(becky, visible_fuelcells)
     overall = np.hstack((table_plot,frame))
@@ -65,6 +71,7 @@ while True:
     #     print(fc.__dict__)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        arduino.release()
-        camera.release()
+        sys.exit()
+        # arduino.release()
+        # camera.release()
         break

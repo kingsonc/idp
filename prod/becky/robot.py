@@ -29,7 +29,7 @@ class RobotState():
             x_center = int(x_center)
             y_center = int(y_center)
             coords_cm = vision.map_coord_to_cm((x_center,y_center))
-            print(f"Robot found at ({coords_cm}).")
+            # print(f"Robot found at ({coords_cm}).")
             self.visible = True
 
             self.tracked_pts.appendleft((x_center, y_center))
@@ -51,7 +51,7 @@ class RobotState():
 
         mag = dx**2 + dy**2
         if mag < 500:
-            print("Robot not moving")
+            # print("Robot not moving")
             return self.last_orientation
 
         orientation = math.atan2(dy,dx)
