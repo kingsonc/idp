@@ -25,7 +25,6 @@ void setup() {
   Serial.begin(9600);
   Serial.println("<Arduino is ready>");
   
-  pinMode(13, OUTPUT);
   AFMS.begin();
 
   Motor_L->setSpeed(0);

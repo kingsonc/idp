@@ -3,182 +3,122 @@
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
-// Create the motor shield object with the default I2C address
+// Create the motor shield object and set addresses.
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
-// Select which 'port' M1, M2, M3 or M4. In this case, M1
-Adafruit_DCMotor *Motor_1 = AFMS.getMotor(1);
-// You can also make another motor on port M2
-Adafruit_DCMotor *Motor_2 = AFMS.getMotor(2);
+Adafruit_DCMotor *Motor_L = AFMS.getMotor(1);
+Adafruit_DCMotor *Motor_R = AFMS.getMotor(2);
 
 //Create Servo Object
 Servo propeller;
 
-//define analog photodiode input
+//define analog beam break input
 int photodiode=A0;
+bool block_in_working_area = false;
 
-//declare variables needed later on
-String rc;
-boolean newData = false;
-int rcv_spd;
-char rcvd_dirn;
-int pos = 0;    // variable to store the servo position
+//define hall effect pin
+int hall_effect_pin=A1;
+bool is_magnetic=false;
 
 //Serial Communications Protocol
 //Print new serial data
-void showNewData() {
-     rcvd_dirn = rc.charAt(0);
-     rc.remove(0,1);
-     rcv_spd = rc.toInt();
-     Serial.println(rcvd_dirn);
-     Serial.println(rcv_spd);
-     newData = false;
-}
-
-// Receive Serial Data
-void recvWithStartEndMarkers() {
-    char startMarker = '<';
-    char endMarker = '>';
-    
-  if (Serial.available() > 0) {
-      rc = Serial.readStringUntil(endMarker);
-      if (rc.charAt(0)== 60){
-        rc.remove(0,1);
-        newData = true;
-      }
+void decoder(String cmd) {
+  if (cmd.charAt(0) == 'M') {
+    int spd = cmd.substring(3,6).toInt(); //slice bits 3-6 from serial (speed)
+     
+     //set motor speeds using commands received from serial
+     if (cmd.charAt(1) == 'L') {
+      Motor_L->setSpeed(spd);
+    } else if (cmd.charAt(1) == 'R'){
+      Motor_R->setSpeed(spd);
+    }      
   }
 }
 
-//declare functions to move forwards, backwards, left and right turns.
-//Move Forwards
-void forwards(int spd) {
-  //set default speeds
-  Motor_1->setSpeed(spd);
-  Motor_2->setSpeed(spd);
-
-  //move forward
-  Motor_1->run(FORWARD);
-  Motor_2->run(FORWARD);
-  delay(500);
-  
-  Motor_1->run(RELEASE);
-  Motor_2->run(RELEASE);
+//define slow movement forwards
+void slow_movement() {
+    Motor_L->setSpeed(100);
+    Motor_R->setSpeed(100);
+    Motor_L->run(FORWARD);
+    Motor_R->run(FORWARD);
 }
 
-//Left Turn
-void left_turn(int spd) {
-  //set default speeds
-  Motor_1->setSpeed(spd);
-  Motor_2->setSpeed(spd);
-
-  //turn left
-  Motor_1->run(FORWARD);
-  //Motor_2->run(BACKWARD);
-  delay(500);
-  
-  Motor_1->run(RELEASE);
-  Motor_2->run(RELEASE);
+//define motor stop
+void stop_motors() {
+  Motor_L->setSpeed(0);
+  Motor_R->setSpeed(0);
+  Motor_L->run(FORWARD);
+  Motor_R->run(FORWARD);
 }
 
-//Right Turn
-void right_turn(int spd) {
-  //set default speeds
-  Motor_1->setSpeed(spd);
-  Motor_2->setSpeed(spd);
-  
-  //turn right
-  //Motor_1->run(BACKWARD);
-  Motor_2->run(FORWARD);
-  delay(500);
-  
-  Motor_1->run(RELEASE);
-  Motor_2->run(RELEASE);
+//Beam Break Testing Subroutine
+void beam_break() {
+  int val = analogRead(photodiode);
+  if (val >= 700) {                                   //set threshold
+       Serial.println("There is a block in the way!");
+       block_in_working_area = true;
+  }
+  else {
+        block_in_working_area=false;
+  }
 }
 
-//Reverse
-void reverse(int spd) {
-  //set default speeds
-  Motor_1->setSpeed(spd);
-  Motor_2->setSpeed(spd);
-  
-  //reverse
-  Motor_1->run(BACKWARD);
-  Motor_2->run(BACKWARD);
-  delay(500); //500ms continuous running
-  
-  Motor_1->run(RELEASE);
-  Motor_2->run(RELEASE);
+//Hall Effect Testing Subroutine
+void hall_effect() {
+  int magnetic = analogRead(hall_effect_pin);
+  int threshold = 350-magnetic;
+    if (abs(threshold) >=200) {                          //set threshold
+      is_magnetic = true;
+    }
+    else {
+      is_magnetic = false;
+    }
 }
 
+//Accept and reject mechanism
 void servo_accept(){
-  for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-    // in steps of 1 degree
-    propeller.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(3);                       // waits 15ms for the servo to reach the position
-  }
-  for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-    propeller.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(3);                       // waits 15ms for the servo to reach the position
-  }                                 // waits for the servo to get there
+  slow_movement();
+  delay(3);                         
+  propeller.write(180);              // tell servo to go to 180 ****NEEDS CHANGING***
+  Serial.print("Block Accepted");
+}
+
+void servo_reject() {
+  slow_movement();
+  delay(3);                         
+  propeller.write(0);               // tell servo to go to 0  ****NEEDS CHANGING***
+  Serial.print("Block Rejected");
 }
 
 //Setup and Loop
 void setup() {
-  pinMode(photodiode,INPUT); //initialise photodiode pin input
-  propeller.attach(9);       //initialise servo object
+  //initialise photodiode pin input
+  pinMode(photodiode,INPUT); 
+  
+  //initialise servo object
+  propeller.attach(9);       
+
+  //Initialise Motors
+  AFMS.begin();
+  stop_motors();
   Serial.begin(9600);        //initialise serial
-  while (!Serial) {
-   ; // wait for serial port to connect. Needed for native USB port only
-  }
-  Serial.write("Connected!");
+  Serial.write("Arduino is Ready.");
 }
 
 void loop() {
   //initialise adafruit 
   AFMS.begin();
 
-  //beam break
-  int val = analogRead(photodiode);
-  if (val >= 700) {
-    //run subroutine here
-    Serial.println("There is a block in the way!");
-
-    //move motors a little
-
-    //hall effect condition !!!!!!!!!!!!!!!!!!
-    //accept 
-    if (hall_effect==1) {
-      servo_accept();  
+    //test beam break and hall effect
+    beam_break();
+    hall_effect();
+    if (block_in_working_area == true && is_magnetic==false) {
+      servo_accept();               //accept block
+      is_magnetic = false;          //reset
+      block_in_working_area = false;
     }
-
-    //reject
-    else if (hall_effect==0) {
-      //servo_reject();  
+    else if (block_in_working_area == true && is_magnetic==true) {
+      servo_reject();               //reject block
+      is_magnetic = false;          //reset
+      block_in_working_area = false;
     }
-  }
-  
-  //receive new commands
-  recvWithStartEndMarkers();
-  if (newData == true) {
-      showNewData();
-      //everything else that depends on rc goes here
-      if (rcvd_dirn == 119) { //decimal ascii code for w
-         Serial.println("moving forwards");
-         forwards(rcv_spd);
-      }
-    
-      else if (rcvd_dirn == 115) { //decimal ascii code for s
-         Serial.println("moving backwards");
-         reverse(rcv_spd);
-      }
-    
-      else if (rcvd_dirn == 97) { //decimal ascii for a
-         Serial.println("turning left");
-         left_turn(rcv_spd);
-      }
-    
-      else if (rcvd_dirn == 100) { //decimal ascii for d
-         Serial.println("turning right");
-         right_turn(rcv_spd);
-      }
-  }
-}
+  }  
