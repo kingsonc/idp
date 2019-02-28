@@ -4,7 +4,7 @@ import numpy as np
 from config import current_config as config
 
 table = np.zeros(config.FRAME_POST_PROCESS_SHAPE + (3,), np.uint8)
-table[:] = (128,128,128)
+table[:] = (128,128,128)    #Background colour
 
 # Horizontal start white line
 cv2.rectangle(table, (0,1289), (1473,1301), (255,255,255), -1)

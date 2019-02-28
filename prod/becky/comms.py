@@ -36,11 +36,6 @@ class Arduino:
             else:
                 time.sleep(0.01)
 
-    # def send(self, value):
-    #     with self.send_cmds_lock:
-    #         self.send_cmds = value + '.'
-    #         self.wait_send = True
-
     def send(self, motor_L, motor_R):
         if motor_L.updated:
             with self.send_cmds_lock:
