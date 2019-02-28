@@ -4,8 +4,8 @@ import numpy as np
 
 import becky.comms as comms
 import becky.fuelcell as fuelcell
-import becky.path_finder2 as path_finder
-import becky.plotter2 as plotter
+import becky.path_finder as path_finder
+import becky.plotter as plotter
 import becky.robot as robot
 import becky.webcam as webcam
 import becky.vision as vision
@@ -15,9 +15,6 @@ import becky.vision as vision
 
 cv2.namedWindow('Camera', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('Camera', 1200,600)
-
-# cv2.namedWindow('grid', cv2.WINDOW_NORMAL)
-# cv2.resizeWindow('grid', 600,600)
 
 ### Uncomment one of below to choose between live webcam or recorded video
 # camera = webcam.Webcam()
@@ -66,8 +63,6 @@ while True:
     arduino.send(motor_L, motor_R)
 
     overall = np.hstack((table_plot,frame))
-
-    # cv2.imshow('grid', grid)
     cv2.imshow('Camera', overall)
     # out.write(overall)
 

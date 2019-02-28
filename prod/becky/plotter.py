@@ -1,73 +1,66 @@
-import matplotlib.pyplot as plt
+import math
+import cv2
+import numpy as np
+from config import current_config as config
 
-"""You will need to plt.ion() in the main code and plt.pause(0.0001) or
-something may be necessary to continually update and ax.clear()"""
+table = np.zeros(config.FRAME_POST_PROCESS_SHAPE + (3,), np.uint8)
+table[:] = (128,128,128)
 
-def boardplot(robot_coords, blocks, frame):
-    """Plots everything on a board map"""
+# Horizontal start white line
+cv2.rectangle(table, (0,1289), (1473,1301), (255,255,255), -1)
 
-    if type(robot_coords) == tuple:
-        # Get the location of the robot
-        rx = robot_coords[0]
-        ry = robot_coords[1]
-        # Plot the robot as a triangle
-        plt.scatter(ry,240-rx,color='y',marker='*')
+# Start box left
+cv2.rectangle(table, (80,1412), (276,1424), (255,255,255), -1)     #Bot
+cv2.rectangle(table, (80,1166), (276,1178), (255,255,255), -1)     #Top
+cv2.rectangle(table, (80,1178), (92,1412), (255,255,255), -1)      #Left
+cv2.rectangle(table, (264,1178), (276,1412), (255,255,255), -1)    #Right
+cv2.rectangle(table, (172,994), (184,1473), (255,255,255), -1)     #Vertical
 
-    # Gets and plots the block coordinates
-    for i in blocks.values():
-        #xb_cm = round(i.coord[1]*240/1473, 2)
-        #yb_cm = 240-round((1473-i.coord[1])*240/1473, 2)
-        plt.scatter(i.map_coord_cm[1],240-i.map_coord_cm[0],color='b')
+# Start box right
+cv2.rectangle(table, (1197,1412), (1393,1424), (255,255,255), -1)  #Bot
+cv2.rectangle(table, (1198,1166), (1393,1178), (255,255,255), -1)  #Top
+cv2.rectangle(table, (1197,1178), (1209,1412), (255,255,255), -1)  #Left
+cv2.rectangle(table, (1381,1178), (1393,1412), (255,255,255), -1)  #Right
+cv2.rectangle(table, (1289,994), (1301,1473), (255,255,255), -1)   #Vertical
 
-    """We now plot the rest of the grid"""
+# Safe zone
+cv2.rectangle(table, (601,1338), (872,1350), (0,255,0), -1)        #Top
+cv2.rectangle(table, (601,1338), (614,1473), (0,255,0), -1)        #Left
+cv2.rectangle(table, (859,1338), (872,1473), (0,255,0), -1)        #Right
 
-    plt.xlim(xmin=0,xmax=240)
-    plt.ylim(ymin=0,ymax=240)
+# Shelf
+cv2.rectangle(table, (615,1418), (859,1473), (0,204,204), -1)
 
-    # Horiztonal white start boxes
-    plt.fill([8,8,52,52],[227,225,225,227],color='w')
-    plt.fill([8,8,52,52],[195,193,193,195],color='w')
-    plt.fill([0,0,70,70],[211,209,209,211],color='w')
-    plt.fill([8,8,52,52],[13,15,15,13],color='w')
-    plt.fill([8,8,52,52],[47,45,45,47],color='w')
-    plt.fill([0,0,70,70],[31,29,29,31],color='w')
-    # Horiztonal checks
-    plt.fill([240,240,220,220],[79,81,81,79],color='w')
-    plt.fill([240,240,220,220],[99,101,101,99],color='w')
-    plt.fill([240,240,220,220],[119,121,121,119],color='w')
-    plt.fill([240,240,220,220],[139,141,141,139],color='w')
-    plt.fill([240,240,220,220],[159,161,161,159],color='w')
-    # Safe Zone
-    plt.fill([0,0,22,22],[98,100,100,98],color='g')
-    plt.fill([0,0,22,22],[142,140,140,142],color='g')
+# Red line
+cv2.rectangle(table, (0,730), (1473,743), (0,0,200), -1)
 
-    # Vertical white start boxes
-    plt.fill([8,8,10,10],[13,45,45,13],color='w')
-    plt.fill([50,50,52,52],[13,45,45,13],color='w')
-    plt.fill([8,8,10,10],[227,195,195,227],color='w')
-    plt.fill([50,50,52,52],[227,195,195,227],color='w')
-    plt.fill([29,29,31,31],[0,240,240,0],color='w')
+# Horizontal check
+cv2.rectangle(table, (368,55), (1105,68), (255,255,255), -1)
 
-    # Vertical green
-    plt.fill([20,20,22,22],[98,142,142,98],color='g')
+# Vertical checks
+cv2.rectangle(table, (485,0), (497,123), (255,255,255), -1)
+cv2.rectangle(table, (607,0), (620,123), (255,255,255), -1)
+cv2.rectangle(table, (730,0), (743,123), (255,255,255), -1)
+cv2.rectangle(table, (853,0), (865,123), (255,255,255), -1)
+cv2.rectangle(table, (976,0), (988,123), (255,255,255), -1)
 
-    # Vertical check
-    plt.fill([229,229,231,231],[60,180,180,60],color='w')
+def board_plot(robotState, fuelcells):
+    current_table = table.copy()
 
-    # shelf
-    plt.fill([0,0,9,9],[100,140,140,100],color=(0.651,0.502,0.3922))
+    if robotState.visible == True:
+        robot_coords = robotState.lastseen_coords()
+        cv2.circle(current_table, robot_coords, 20, (0,255,255), -1)
 
-    # red line
-    plt.fill([119,121,121,119],[0,240,240,0],color='r')
+        robot_orientation = robotState.orientation()
+        if robot_orientation:
+            robot_arrow_end = (int(robot_coords[0]+200*math.cos(robot_orientation)),
+                               int(robot_coords[1]+200*math.sin(robot_orientation)))
+            cv2.arrowedLine(current_table,robot_coords,robot_arrow_end,(0,255,0),3)
 
-    # Black background
-    ax = plt.gca()
-    ax.set_facecolor((0.5, 0.5, 0.5))
+    for fc in fuelcells:
+        cv2.circle(current_table, fc.coord, 10, (255,0,0), -1)
+        cv2.putText(current_table, str(fc.FCID),
+                    (fc.coord[0],fc.coord[1]-15), cv2.FONT_HERSHEY_SIMPLEX,
+                    1, (0,0,139), 2);
 
-    # Plot
-    plt.rcParams["figure.figsize"] = (7,7)
-    plt.xticks([])
-    plt.yticks([])
-    plt.show()
-    plt.pause(0.00001)
-    ax.clear()
+    return current_table

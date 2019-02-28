@@ -1,130 +1,182 @@
-import numpy as np
+from copy import deepcopy
+import math
+import threading
+import time
 import cv2
+import numpy as np
 from config import current_config as config
-
-def table3():
-    # Left limit
-    pts = np.array([[[0,0],[104,0],[70,1472],[0,1472]]])
-    cv2.fillPoly(default_grid,pts,(255,255,255))
-
-    # Right limit
-    cv2.rectangle(default_grid, (1283,0), (1472,1472), (255,255,255), -1)
-
-    # Lighting
-    cv2.rectangle(default_grid, (1154,984), (1282,1472), (255,255,255), -1)
-
-default_grid = np.zeros(config.FRAME_POST_PROCESS_SHAPE+(3,), dtype=np.uint8)
-if config.TABLE == 3:
-    table3()
-
-def generate_grid(visible_fuelcells):
-    grid = default_grid.copy()
-    for fuelcell in visible_fuelcells:
-        if not fuelcell.target:
-            cv2.circle(grid, fuelcell.coord, 101, (255,255,255), -1)
-    return grid
-
-def plot_path(grid,path):
-    for i in range(len(path)-1):
-        cv2.line(grid, path[i], path[i+1],(0,255,0),3)
-    return grid
 
 class Node:
     """A node for A* Pathfinding algorithm
     """
-    def __init__(self, parent=None, position=None):
-        self.parent = parent
+    def __init__(self, position, cost, parent_id):
         self.position = position
+        self.cost = cost
+        self.parent_id = parent_id
 
-        self.f = 0      # Total cost of node
-        self.g = 0      # Distance from start node
-        self.h = 0      # Heuristic - estimated distance to end node
+class PathFinder:
+    def __init__(self):
+        self._default_grid = np.zeros((240,240,3), dtype=np.uint8)
+        self.visible_fuelcells = None
+        self.robot_coords = None
+        self.target_coords = None
+        self.path = None
 
-    def __eq__(self, other):
-        return self.position == other.position
+        # Create table boundaries
+        if config.TABLE == 3:
+            self._table3()
 
-def path_algorithm(grid, start, end):
-    """Implementation of A* Pathfinding algorithm
-    Adapted from:
-    https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
-    Args:
-        grid (numpy.ndarray): numpy 2d array of obstacles map
-        start (tuple): coordinate of start position
-        end (tuple): coordinate of end position
+        self.thread = threading.Thread(target=self.path_algorithm, daemon=True)
+        self.variables_lock = threading.Lock()
+        self.path_lock = threading.Lock()
+        self.thread.start()
 
-    Returns:
-        path (list of tuples): shortest path from start to end in the grid
+    def _table3(self):
+        # Left limit
+        pts = np.array([[[0,0],[17,0],[11,240],[0,240]]])
+        cv2.fillPoly(self._default_grid,pts,(255,255,255))
+
+        # Right limit
+        cv2.rectangle(self._default_grid, (209,0), (240,240), (255,255,255), -1)
+
+        # Lighting
+        cv2.rectangle(self._default_grid, (188,160), (209,240), (255,255,255), -1)
+
+    def _generate_grid(self, visible_fuelcells):
+        """Generates pathing obstacles based on position of fuelcells.
+        Avoids 16cm radius zone from each fuelcell.
+        """
+        grid = self._default_grid.copy()
+        if visible_fuelcells:
+            for fuelcell in visible_fuelcells:
+                if not fuelcell.target:
+                    cv2.circle(grid, fuelcell.map_coord_cm, 16, (255,255,255), -1)
+        return grid
+
+    def path_algorithm(self):
+        """Implementation of A* Pathfinding algorithm
+        Adapted from:
+        https://medium.com/@nicholas.w.swift/easy-a-star-pathfinding-7e6689c7f7b2
+        https://github.com/AtsushiSakai/PythonRobotics/blob/master/PathPlanning/AStar/a_star.py
+        """
+        # dx,dy,cost
+        motions = [[0,1,1],
+                  [1,0,1],
+                  [0,-1,1],
+                  [-1,0,1],
+                  [-1,-1,math.sqrt(2)],
+                  [-1,1,math.sqrt(2)],
+                  [1,-1,math.sqrt(2)],
+                  [1,1,math.sqrt(2)]]
+
+        while True:
+            with self.variables_lock:
+                visible_fuelcells = self.visible_fuelcells
+                start = self.robot_coords
+                end = self.target_coords
+
+            # If start or end positions do not exist, continue
+            if not start or not end:
+                continue
+
+            # Generate map based on current fuelcell positions
+            table = self._generate_grid(visible_fuelcells)[:,:,0]
+            start_node = Node(start,0,-1)
+            end_node = Node(end,0,-1)
+
+            openset = dict()
+            closedset = dict()
+
+            openset[self._calc_index(start_node)] = start_node
+
+            while True:
+                # If openset is empty -> no possible path
+                if not openset:
+                    print("no path found")
+                    with self.path_lock:
+                        self.path = None
+                    break
+
+                # Find next best node to search according to minumum cost
+                current_id = min(openset,
+                           key=lambda x: openset[x].cost+self._calc_heuristic(openset[x],end_node))
+                current_node = openset[current_id]
+
+                # Found end position
+                if current_node.position == end_node.position:
+                    end_node.parent_id = current_node.parent_id
+                    end_node.cost = current_node.cost
+
+                    with self.path_lock:
+                        self.path = self._calc_final_path(end_node, closedset)
+                    break
+
+                # Remove searched node from open set and add to closed set
+                del openset[current_id]
+                closedset[current_id] = current_node
+
+                # expand search, put neighbouring nodes into open set
+                for motion in motions:
+                    new_node = Node((current_node.position[0]+motion[0], current_node.position[1]+motion[1]),
+                                current_node.cost + motion[2], current_id)
+                    node_id = self._calc_index(new_node)
+
+                    # Skip if node already in closed set, ie already been searched
+                    if node_id in closedset:
+                        continue
+
+                    # Skip if node is a wall or obstacle
+                    if not self._verify_node(table, new_node):
+                        continue
+
+                    if node_id not in openset:
+                        # Add node into open set
+                        openset[node_id] = new_node
+                    else:
+                        # If node already in open set, check if new path to node is faster
+                        if openset[node_id].cost >= new_node.cost:
+                            openset[node_id] = new_node
+
+    def _calc_index(self, node):
+        """Generates unique index for each position
+        """
+        return (node.position[1])*240 + node.position[0]
+
+    def _calc_heuristic(self, current_node, end_node):
+        """Euclidean distance between node and end position
+        """
+        return math.sqrt((current_node.position[0] - end_node.position[0])**2 +
+                         (current_node.position[1] - end_node.position[1])**2)
+
+    def _verify_node(self, table, node):
+        # Check within table range and not obstacle
+        conditions = (node.position[0] < 0 or node.position[0] >= len(table)
+                      or node.position[1] < 0 or node.position[1] >= len(table)
+                      or table[node.position[1]][node.position[0]])
+
+        if conditions:
+            return False
+        else:
+            return True
+
+    def _calc_final_path(self, end_node, closedset):
+        """Generate final shortest path
+        """
+        path = [end_node.position]
+        parent_id = end_node.parent_id
+
+        # Recursively look through parent nodes
+        while parent_id != -1:
+            node = closedset[parent_id]
+            path.append(node.position)
+            parent_id = node.parent_id
+
+        return path
+
+def plot_path(plot,path):
+    """Plot path onto map
     """
-    grid = grid[:,:,0]
-    start_node = Node(None, start)
-    start_node.g = start_node.h = start_node.f = 0
-    end_node = Node(None, end)
-    end_node.g = end_node.h = end_node.f = 0
-
-    open_list = []
-    closed_list = []
-
-    open_list.append(start_node)
-
-    while len(open_list) > 0:
-        current_node = open_list[0]
-        current_index = 0
-        for index, node in enumerate(open_list):
-            if node.f < current_node.f:
-                current_node = node
-                current_index = index
-
-        open_list.pop(current_index)
-        closed_list.append(current_node)
-
-        # Found end point
-        if current_node == end_node:
-            path = []
-            current = current_node
-            while current is not None:
-                path.append(current.position)
-                current = current.parent
-            return path[::-1]
-
-        # Generate children
-        children = []
-        adj_points = [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]
-        for new_position in adj_points: # Adjacent squares
-            node_position = (current_node.position[0] + new_position[0],
-                             current_node.position[1] + new_position[1])
-
-            # Check if node is in table range
-            range_cond = (node_position[0] > (len(grid) - 1)
-                          or node_position[0] < 0
-                          or node_position[1] > (len(grid[0]) -1)
-                          or node_position[1] < 0)
-            if range_cond:
-                continue
-
-            # Check if node is obstacle
-            if grid[node_position[0]][node_position[1]] != 0:
-                continue
-
-            # Create new node and add to current node's list of children
-            new_node = Node(current_node, node_position)
-            children.append(new_node)
-
-        for child in children:
-            # Child is already in closed list
-            for closed_child in closed_list:
-                if child == closed_child:
-                    continue
-
-            # Calculate f,g,h values
-            child.g = current_node.g + 1
-            child.h = ((child.position[0] - end_node.position[0])**2
-                       + (child.position[1] - end_node.position[1])**2)
-            child.f = child.g + child.h
-
-            # Child is already in open list
-            # -> ignore if new g is higher than existing g
-            for open_node in open_list:
-                if child == open_node and child.g > open_node.g:
-                    continue
-
-            open_list.append(child)
+    for i in range(len(path)-1):
+        cv2.line(plot, (int(path[i][0]*92/15), int(path[i][1]*92/15)),
+                 (int(path[i+1][0]*92/15), int(path[i+1][1]*92/15)),(0,255,0),3)
+    return plot
