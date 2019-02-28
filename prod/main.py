@@ -16,8 +16,8 @@ import becky.vision as vision
 cv2.namedWindow('Camera', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('Camera', 1200,600)
 
-cv2.namedWindow('grid', cv2.WINDOW_NORMAL)
-cv2.resizeWindow('grid', 600,600)
+# cv2.namedWindow('grid', cv2.WINDOW_NORMAL)
+# cv2.resizeWindow('grid', 600,600)
 
 ### Uncomment one of below to choose between live webcam or recorded video
 # camera = webcam.Webcam()
@@ -25,6 +25,7 @@ camera = webcam.VideoClip('../test_files/output1.avi')
 
 becky = robot.RobotState()
 fctracker = fuelcell.FuelCellsTracker()
+navigation = path_finder.PathFinder()
 arduino = comms.ArduinoNC('COM15')
 
 motor_L = comms.Motor("L")
@@ -41,7 +42,8 @@ while True:
 
     robot_coords = becky.find_robot(frame)
 
-    grid = path_finder.generate_grid(visible_fuelcells)
+    # grid = path_finder.generate_grid(visible_fuelcells)
+    table_plot = plotter.board_plot(becky, visible_fuelcells)
 
     if robot_coords:
         if robot_coords[1] < 737:
@@ -51,16 +53,21 @@ while True:
             motor_L.speed = 0
             motor_R.speed = 255
 
-        path = path_finder.path_algorithm(grid, robot_coords, (150,50))
+        with navigation.variables_lock:
+            navigation.visible_fuelcells = visible_fuelcells
+            navigation.robot_coords = robot_coords
+            navigation.target_coords = (150,50)
+
+    with navigation.path_lock:
+        path = navigation.path
         if path:
-            grid = path_finder.plot_path(grid,path)
+            table_plot = path_finder.plot_path(table_plot,path)
 
     arduino.send(motor_L, motor_R)
 
-    table_plot = plotter.board_plot(becky, visible_fuelcells)
     overall = np.hstack((table_plot,frame))
 
-    cv2.imshow('grid', grid)
+    # cv2.imshow('grid', grid)
     cv2.imshow('Camera', overall)
     # out.write(overall)
 
