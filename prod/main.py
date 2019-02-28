@@ -4,7 +4,7 @@ import numpy as np
 
 import becky.comms as comms
 import becky.fuelcell as fuelcell
-import becky.path_finder as path_finder
+import becky.path_finder2 as path_finder
 import becky.plotter2 as plotter
 import becky.robot as robot
 import becky.webcam as webcam
@@ -25,7 +25,7 @@ camera = webcam.VideoClip('../test_files/output1.avi')
 
 becky = robot.RobotState()
 fctracker = fuelcell.FuelCellsTracker()
-arduino = comms.Arduino('COM15')
+arduino = comms.ArduinoNC('COM15')
 
 motor_L = comms.Motor("L")
 motor_R = comms.Motor("R")
@@ -47,11 +47,13 @@ while True:
         if robot_coords[1] < 737:
             motor_L.speed = 255
             motor_R.speed = 0
-            # arduino.send('MLF255,MRF000,')
         else:
             motor_L.speed = 0
             motor_R.speed = 255
-            # arduino.send('MLF000,MRF255,')
+
+        path = path_finder.path_algorithm(grid, robot_coords, (150,50))
+        if path:
+            grid = path_finder.plot_path(grid,path)
 
     arduino.send(motor_L, motor_R)
 

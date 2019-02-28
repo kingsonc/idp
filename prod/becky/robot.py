@@ -34,7 +34,7 @@ class RobotState():
 
             self.tracked_pts.appendleft((x_center, y_center))
             self.tracked_pts_cm.appendleft(coords_cm)
-            return (x_center, y_center)
+            return coords_cm
 
     def lastseen_coords(self):
         if self.tracked_pts:
