@@ -66,6 +66,6 @@ def find_fuel_cells(frame):
     return fuelcell_coords
 
 def map_coord_to_cm(coord):
-    x = round(coord[0]*config.TABLE_SIZE[0]/config.FRAME_POST_PROCESS_SHAPE[0],2)
-    y = round(coord[1]*config.TABLE_SIZE[1]/config.FRAME_POST_PROCESS_SHAPE[1],2)
+    x = round(coord[0]*config.TABLE_SIZE[0]/config.FRAME_POST_PROCESS_SHAPE[0])
+    y = round(coord[1]*config.TABLE_SIZE[1]/config.FRAME_POST_PROCESS_SHAPE[1])
     return (x,y)
