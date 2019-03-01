@@ -10,6 +10,7 @@ Adafruit_DCMotor *Motor_R = AFMS.getMotor(2);
 
 //Create Servo Object
 Servo propeller;
+int propeller_pin = 9
 
 //define analog beam break input
 int photodiode=A0;
@@ -95,7 +96,7 @@ void setup() {
   pinMode(photodiode,INPUT); 
   
   //initialise servo object
-  propeller.attach(9);       
+  propeller.attach(propeller_pin);       
 
   //Initialise Motors
   AFMS.begin();
