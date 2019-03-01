@@ -1,6 +1,6 @@
-from copy import deepcopy
 import math
-import threading
+import multiprocessing
+from multiprocessing import Queue
 import time
 import cv2
 import numpy as np
@@ -17,19 +17,20 @@ class Node:
 class PathFinder:
     def __init__(self):
         self._default_grid = np.zeros((240,240,3), dtype=np.uint8)
-        self.visible_fuelcells = None
-        self.robot_coords = None
-        self.target_coords = None
-        self.path = None
+
+        self.visible_fuelcells_q = multiprocessing.Queue(1)
+        self.robot_coords_q = multiprocessing.Queue(1)
+        self.target_coords_q = multiprocessing.Queue(1)
+        self.path_q = multiprocessing.Queue(1)
 
         # Create table boundaries
         if config.TABLE == 3:
             self._table3()
 
-        self.thread = threading.Thread(target=self.path_algorithm, daemon=True)
-        self.variables_lock = threading.Lock()
-        self.path_lock = threading.Lock()
-        self.thread.start()
+        self.process = multiprocessing.Process(target=self.path_algorithm, daemon=True)
+        # self.variables_lock = multiprocessing.Lock()
+        # self.path_lock = multiprocessing.Lock()
+        # self.thread.start()
 
     def _table3(self):
         # Left limit
@@ -70,10 +71,10 @@ class PathFinder:
                   [1,1,math.sqrt(2)]]
 
         while True:
-            with self.variables_lock:
-                visible_fuelcells = self.visible_fuelcells
-                start = self.robot_coords
-                end = self.target_coords
+            # with self.variables_lock:
+            visible_fuelcells = self.visible_fuelcells_q.get()
+            start = self.robot_coords_q.get()
+            end = self.target_coords_q.get()
 
             # If start or end positions do not exist, continue
             if not start or not end:
@@ -93,8 +94,8 @@ class PathFinder:
                 # If openset is empty -> no possible path
                 if not openset:
                     print("no path found")
-                    with self.path_lock:
-                        self.path = None
+                    # with self.path_lock:
+                    # self.path = None
                     break
 
                 # Find next best node to search according to minumum cost
@@ -107,8 +108,8 @@ class PathFinder:
                     end_node.parent_id = current_node.parent_id
                     end_node.cost = current_node.cost
 
-                    with self.path_lock:
-                        self.path = self._calc_final_path(end_node, closedset)
+                    # with self.path_lock:
+                    self.path_q.put(self._calc_final_path(end_node, closedset))
                     break
 
                 # Remove searched node from open set and add to closed set
