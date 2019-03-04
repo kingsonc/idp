@@ -5,13 +5,13 @@
 
 // Create the motor shield object and set addresses.
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
-Adafruit_DCMotor *Motor_L = AFMS.getMotor(1);
-Adafruit_DCMotor *Motor_R = AFMS.getMotor(2);
+Adafruit_DCMotor *Motor_R = AFMS.getMotor(1);
+Adafruit_DCMotor *Motor_L = AFMS.getMotor(2);
 Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
 
 //Create Servo Object
 Servo myservo;
-int propeller_pin = 9;
+int servo_pin = 9;
 
 //define analog beam break input
 int photodiode=A0;
@@ -33,9 +33,23 @@ void decoder(String cmd) {
      //set motor speeds using commands received from serial
      if (cmd.charAt(1) == 'L') {
       Motor_L->setSpeed(spd);
-    } else if (cmd.charAt(1) == 'R'){
+      
+      //check direction
+      if (cmd.charAt(2) == 'F') {
+        Motor_L->run(FORWARD);}  
+      else if (cmd.charAt(2) == 'R'){
+        Motor_L->run(BACKWARD);}       
+      }
+      
+     else if (cmd.charAt(1) == 'R'){
       Motor_R->setSpeed(spd);
-    }      
+      
+      //check direction
+      if (cmd.charAt(2) == 'F') {
+        Motor_R->run(FORWARD);}  
+      else if (cmd.charAt(2) == 'R'){
+        Motor_R->run(BACKWARD);}  
+      }      
   }
 }
 
@@ -87,7 +101,7 @@ void servo_accept(){
   stop_motors();                        
  
   // sweep out
-  for (pos = 50; pos<=180; pos+=1){
+  for (int pos = 50; pos<=180; pos+=1){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(10);
   } 
@@ -103,7 +117,7 @@ void servo_reject() {
   stop_motors();                          
   
   // sweep out
-  for (pos = 100; pos>=0; pos-=1){
+  for (int pos = 100; pos>=0; pos-=1){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(10);
   } 
@@ -130,8 +144,9 @@ void setup() {
   //initialise photodiode pin input
   pinMode(photodiode,INPUT); 
   
-  //initialise servo object
-  propeller.attach(propeller_pin);       
+  //initialise servo object and set to neutral
+  myservo.attach(servo_pin);
+  myservo.write(90);       
 
   //Initialise Motors
   AFMS.begin();
