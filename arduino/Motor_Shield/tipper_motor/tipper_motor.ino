@@ -7,19 +7,17 @@
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *Motor_1 = AFMS.getMotor(1);
-// You can also make another motor on port M2
-Adafruit_DCMotor *Motor_2 = AFMS.getMotor(2);
 
 
 //Setup and Loop
 void setup() {
   AFMS.begin();
-  Motor_1->setSpeed(255);
-  Motor_1->run(FORWARD);
-  delay(2050); //500ms continuous running
-  Motor_1->setSpeed(50);
+  Motor_Tip->setSpeed(255);
+  Motor_Tip->run(FORWARD);
+  delay(2050); //Raise for set amount of time
+  Motor_Tip->setSpeed(50); //Hold Motor Steady
   delay(500);
-  Motor_1->run(RELEASE);
+  Motor_Tip->run(RELEASE); //Release Motor
 }
 
 void loop() {

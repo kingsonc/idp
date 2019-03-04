@@ -7,6 +7,7 @@
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *Motor_L = AFMS.getMotor(1);
 Adafruit_DCMotor *Motor_R = AFMS.getMotor(2);
+Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
 
 //Create Servo Object
 Servo propeller;
@@ -67,7 +68,7 @@ void beam_break() {
 void hall_effect() {
   int magnetic = analogRead(hall_effect_pin);
   int threshold = 350-magnetic;
-    if (abs(threshold) >=200) {                          //set threshold
+    if (abs(threshold) >=50) {                          //set threshold
       is_magnetic = true;
     }
     else {
@@ -88,6 +89,15 @@ void servo_reject() {
   delay(3);                         
   propeller.write(0);               // tell servo to go to 0  ****NEEDS CHANGING***
   Serial.print("Block Rejected");
+}
+
+void tipper() {
+  Motor_Tip->setSpeed(255);
+  Motor_Tip->run(FORWARD);
+  delay(2050); //Raise for set amount of time
+  Motor_Tip->setSpeed(50); //Hold Motor Steady
+  delay(500);
+  Motor_Tip->run(RELEASE); //Release Motor
 }
 
 //Setup and Loop
