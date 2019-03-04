@@ -11,7 +11,7 @@ Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
 
 //Create Servo Object
 Servo propeller;
-int propeller_pin = 9
+int propeller_pin = 9;
 
 //define analog beam break input
 int photodiode=A0;
@@ -80,16 +80,22 @@ void hall_effect() {
 //Accept and reject mechanism
 void servo_accept(){
   slow_movement();
-  delay(3);                         
-  propeller.write(180);              // tell servo to go to 180 ****NEEDS CHANGING***
   Serial.print("Block Accepted");
+  delay(3); 
+  stop_motors();                        
+  propeller.write(180);              // tell servo to go to 180 ****NEEDS CHANGING***
+
+  //reset propeller goes here
 }
 
 void servo_reject() {
   slow_movement();
-  delay(3);                         
-  propeller.write(0);               // tell servo to go to 0  ****NEEDS CHANGING***
   Serial.print("Block Rejected");
+  delay(3);
+  stop_motors();                          
+  propeller.write(0);               // tell servo to go to 0  ****NEEDS CHANGING***
+  
+  //reset propeller goes here
 }
 
 void tipper() {
@@ -121,7 +127,7 @@ void loop() {
     AFMS.begin();
 
     //set new motor speed
-    cmd = Serial.readStringUntil(delimiter);
+    String cmd = Serial.readStringUntil(delimiter);
     decoder(cmd);
     
     //test beam break and hall effect
