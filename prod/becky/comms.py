@@ -1,5 +1,5 @@
-import threading
 import serial
+import threading
 import time
 
 class Arduino:
@@ -55,38 +55,6 @@ class Arduino:
         self.ser.close()
         self.thread.join()
         return
-
-
-class Motor:
-    def __init__(self, side=None):
-        self.updated = False
-        self._direction = "F"
-        self._speed = 0
-
-        if side == 'L':
-            self.precmd = "ML"
-        elif side == 'R':
-            self.precmd = "MR"
-
-    @property
-    def direction(self):
-        return self._direction
-
-    @property
-    def speed(self):
-        return self._speed
-
-    @direction.setter
-    def direction(self, value):
-        if self._direction != value:
-            self._direction = value
-            self.updated = True
-
-    @speed.setter
-    def speed(self, value):
-        if self._speed != value:
-            self._speed = value
-            self.updated = True
 
 
 class ArduinoNC:

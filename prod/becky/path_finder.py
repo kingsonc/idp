@@ -2,8 +2,10 @@ import math
 import multiprocessing
 from multiprocessing import Queue
 import time
+
 import cv2
 import numpy as np
+
 from config import current_config as config
 
 class Node:
@@ -28,9 +30,6 @@ class PathFinder:
             self._table3()
 
         self.process = multiprocessing.Process(target=self.path_algorithm, daemon=True)
-        # self.variables_lock = multiprocessing.Lock()
-        # self.path_lock = multiprocessing.Lock()
-        # self.thread.start()
 
     def _table3(self):
         # Left limit
@@ -94,8 +93,6 @@ class PathFinder:
                 # If openset is empty -> no possible path
                 if not openset:
                     print("no path found")
-                    # with self.path_lock:
-                    # self.path = None
                     break
 
                 # Find next best node to search according to minumum cost
@@ -108,7 +105,6 @@ class PathFinder:
                     end_node.parent_id = current_node.parent_id
                     end_node.cost = current_node.cost
 
-                    # with self.path_lock:
                     self.path_q.put(self._calc_final_path(end_node, closedset))
                     break
 

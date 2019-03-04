@@ -1,19 +1,20 @@
 import sys
+
 import cv2
 import numpy as np
 
 import becky.comms as comms
 import becky.fuelcell as fuelcell
+import becky.motor as motor
 import becky.path_finder as path_finder
 import becky.plotter as plotter
 import becky.robot as robot
 import becky.webcam as webcam
 import becky.vision as vision
 
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')
-# out = cv2.VideoWriter('output.avi',fourcc, 10.0, (2946,1473))
-
 if __name__ == '__main__':
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # out = cv2.VideoWriter('output.avi',fourcc, 10.0, (2946,1473))
 
     cv2.namedWindow('Camera', cv2.WINDOW_NORMAL)
     cv2.resizeWindow('Camera', 1200,600)
@@ -28,10 +29,10 @@ if __name__ == '__main__':
     navigation.process.start()
     arduino = comms.ArduinoNC('COM15')
 
-    motor_L = comms.Motor("L")
-    motor_R = comms.Motor("R")
+    motor_L = motor.Motor("L")
+    motor_R = motor.Motor("R")
 
-    path = []
+    path = None
 
     while True:
         timer = cv2.getTickCount()
@@ -41,10 +42,7 @@ if __name__ == '__main__':
         fuelcell_coords = vision.find_fuel_cells(frame)
         fuelcells = fctracker.update(fuelcell_coords)
         visible_fuelcells = fctracker.visible_fuelcells()
-
         robot_coords = becky.find_robot(frame)
-
-        # grid = path_finder.generate_grid(visible_fuelcells)
         table_plot = plotter.board_plot(becky, visible_fuelcells)
 
         if robot_coords:
@@ -73,7 +71,10 @@ if __name__ == '__main__':
 
         if path:
             table_plot = path_finder.plot_path(table_plot,path)
+            ML, MR = motor.PIDController(becky, path)
 
+        motor_L.speed = ML
+        motor_R.speed = MR
         arduino.send(motor_L, motor_R)
 
         overall = np.hstack((table_plot,frame))
