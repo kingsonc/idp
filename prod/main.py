@@ -41,41 +41,41 @@ if __name__ == '__main__':
         frame = vision.cam2map_transform(frame)
         fuelcell_coords = vision.find_fuel_cells(frame)
         fuelcells = fctracker.update(fuelcell_coords)
+        # Update tracker based on new fuelcell positions
         visible_fuelcells = fctracker.visible_fuelcells()
         robot_coords = becky.find_robot(frame)
+        # Generate simulation table
         table_plot = plotter.board_plot(becky, visible_fuelcells)
 
         if robot_coords:
-            if robot_coords[1] < 737:
-                motor_L.speed = 255
-                motor_R.speed = 0
-            else:
-                motor_L.speed = 0
-                motor_R.speed = 255
-
+            # Passing variables for path finding
             try:
+                # Clear multiprocessing queues
                 navigation.visible_fuelcells_q.get_nowait()
                 navigation.robot_coords_q.get_nowait()
                 navigation.target_coords_q.get_nowait()
             except:
                 pass
             finally:
+                # Push new values into queues
                 navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
                 navigation.robot_coords_q.put_nowait(robot_coords)
                 navigation.target_coords_q.put_nowait((150,50))
 
+        # Get new path if available
         try:
             path = navigation.path_q.get_nowait()
         except:
             pass
 
+        # Calculate motor speeds based on path
         if path:
             table_plot = path_finder.plot_path(table_plot,path)
             ML, MR = motor.PIDController(becky, path)
 
-        motor_L.speed = ML
-        motor_R.speed = MR
-        arduino.send(motor_L, motor_R)
+            motor_L.speed = ML
+            motor_R.speed = MR
+            arduino.send(motor_L, motor_R)
 
         overall = np.hstack((table_plot,frame))
         cv2.imshow('Camera', overall)
@@ -84,10 +84,6 @@ if __name__ == '__main__':
         fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
         print(f"FPS: {fps}")
-        # print(f"Robot coords: {robot_coords}")
-
-        # for fc in fuelcells.values():
-        #     print(fc.__dict__)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             sys.exit()
