@@ -80,7 +80,7 @@ void hall_effect() {
 //Accept and reject mechanism
 void servo_accept(){
   slow_movement();
-  Serial.print("Block Accepted");
+  Serial.print("ACCEPT");
   delay(3); 
   stop_motors();                        
   propeller.write(180);              // tell servo to go to 180 ****NEEDS CHANGING***
@@ -90,7 +90,7 @@ void servo_accept(){
 
 void servo_reject() {
   slow_movement();
-  Serial.print("Block Rejected");
+  Serial.print("REJECT");
   delay(3);
   stop_motors();                          
   propeller.write(0);               // tell servo to go to 0  ****NEEDS CHANGING***
@@ -101,10 +101,10 @@ void servo_reject() {
 void tipper() {
   Motor_Tip->setSpeed(255);
   Motor_Tip->run(FORWARD);
-  delay(2050); //Raise for set amount of time
-  Motor_Tip->setSpeed(50); //Hold Motor Steady
+  delay(2050);                      //Raise for set amount of time
+  Motor_Tip->setSpeed(50);          //Hold Motor Steady
   delay(500);
-  Motor_Tip->run(RELEASE); //Release Motor
+  Motor_Tip->run(RELEASE);          //Release Motor
 }
 
 //Setup and Loop
@@ -118,8 +118,8 @@ void setup() {
   //Initialise Motors
   AFMS.begin();
   stop_motors();
-  Serial.begin(9600);        //initialise serial
-  Serial.write("Arduino is Ready.");
+  Serial.begin(9600);                           //initialise serial
+  Serial.write("READY");
 }
 
 void loop() {
@@ -132,15 +132,18 @@ void loop() {
     
     //test beam break and hall effect
     beam_break();
-    hall_effect();
-    if (block_in_working_area == true && is_magnetic==false) {
-      servo_accept();               //accept block
-      is_magnetic = false;          //reset
-      block_in_working_area = false;
-    }
-    else if (block_in_working_area == true && is_magnetic==true) {
-      servo_reject();               //reject block
-      is_magnetic = false;          //reset
-      block_in_working_area = false;
+    
+    if (block_in_working_area == true) {
+      hall_effect();                            //test hall effect
+      
+      if(is_magnetic==false) {
+        servo_accept();}                         //accept block, send serial
+
+      else if (is_magnetic == true) {
+        servo_reject();}                         //reject block, send serial
+
+      //reset
+      is_magnetic = false;         
+      block_in_working_area = false;  
     }
   }  
