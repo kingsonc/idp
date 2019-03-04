@@ -21,6 +21,10 @@ class Config:
 
     MAP_COORDS = np.float32([[1425,1395],[1473,604],[0,482],[0,977]])
 
+    # PID Controller
+    LOOK_AHEAD = 5
+    KP = 1e4
+
 
 class Table3Config(Config):
     """Specific values only applicable to table 3"""

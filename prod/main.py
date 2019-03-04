@@ -1,19 +1,20 @@
 import sys
+
 import cv2
 import numpy as np
 
 import becky.comms as comms
 import becky.fuelcell as fuelcell
+import becky.motor as motor
 import becky.path_finder as path_finder
 import becky.plotter as plotter
 import becky.robot as robot
 import becky.webcam as webcam
 import becky.vision as vision
 
-# fourcc = cv2.VideoWriter_fourcc(*'XVID')
-# out = cv2.VideoWriter('output.avi',fourcc, 10.0, (2946,1473))
-
 if __name__ == '__main__':
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # out = cv2.VideoWriter('output.avi',fourcc, 10.0, (2946,1473))
 
     cv2.namedWindow('Camera', cv2.WINDOW_NORMAL)
     cv2.resizeWindow('Camera', 1200,600)
@@ -28,10 +29,10 @@ if __name__ == '__main__':
     navigation.process.start()
     arduino = comms.ArduinoNC('COM15')
 
-    motor_L = comms.Motor("L")
-    motor_R = comms.Motor("R")
+    motor_L = motor.Motor("L")
+    motor_R = motor.Motor("R")
 
-    path = []
+    path = None
 
     while True:
         timer = cv2.getTickCount()
@@ -40,41 +41,41 @@ if __name__ == '__main__':
         frame = vision.cam2map_transform(frame)
         fuelcell_coords = vision.find_fuel_cells(frame)
         fuelcells = fctracker.update(fuelcell_coords)
+        # Update tracker based on new fuelcell positions
         visible_fuelcells = fctracker.visible_fuelcells()
-
         robot_coords = becky.find_robot(frame)
-
-        # grid = path_finder.generate_grid(visible_fuelcells)
+        # Generate simulation table
         table_plot = plotter.board_plot(becky, visible_fuelcells)
 
         if robot_coords:
-            if robot_coords[1] < 737:
-                motor_L.speed = 255
-                motor_R.speed = 0
-            else:
-                motor_L.speed = 0
-                motor_R.speed = 255
-
+            # Passing variables for path finding
             try:
+                # Clear multiprocessing queues
                 navigation.visible_fuelcells_q.get_nowait()
                 navigation.robot_coords_q.get_nowait()
                 navigation.target_coords_q.get_nowait()
             except:
                 pass
             finally:
+                # Push new values into queues
                 navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
                 navigation.robot_coords_q.put_nowait(robot_coords)
                 navigation.target_coords_q.put_nowait((150,50))
 
+        # Get new path if available
         try:
             path = navigation.path_q.get_nowait()
         except:
             pass
 
+        # Calculate motor speeds based on path
         if path:
             table_plot = path_finder.plot_path(table_plot,path)
+            ML, MR = motor.PIDController(becky, path)
 
-        arduino.send(motor_L, motor_R)
+            motor_L.speed = ML
+            motor_R.speed = MR
+            arduino.send(motor_L, motor_R)
 
         overall = np.hstack((table_plot,frame))
         cv2.imshow('Camera', overall)
@@ -83,10 +84,6 @@ if __name__ == '__main__':
         fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
 
         print(f"FPS: {fps}")
-        # print(f"Robot coords: {robot_coords}")
-
-        # for fc in fuelcells.values():
-        #     print(fc.__dict__)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             sys.exit()

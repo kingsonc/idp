@@ -23,6 +23,7 @@ bool is_magnetic=false;
 
 //Serial Communications Protocol
 char delimiter = ',';
+char end_delimiter = '.';
 //Print new serial data
 void decoder(String cmd) {
   if (cmd.charAt(0) == 'M') {
@@ -123,12 +124,16 @@ void setup() {
 }
 
 void loop() {
-    //initialise adafruit 
-    AFMS.begin();
-
     //set new motor speed
-    String cmd = Serial.readStringUntil(delimiter);
-    decoder(cmd);
+    String rc = Serial.readStringUntil(end_delimiter);
+    int delimiterIdx = rc.indexOf(delimiter);
+    while (delimiterIdx > 0) {
+      String cmd = rc.substring(0,delimiterIdx);
+      decoder(cmd);
+      rc.remove(0, delimiterIdx+1);
+      delimiterIdx = rc.indexOf(delimiter);
+    }
+    Serial.println('A');
     
     //test beam break and hall effect
     beam_break();
