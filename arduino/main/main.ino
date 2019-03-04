@@ -10,7 +10,7 @@ Adafruit_DCMotor *Motor_R = AFMS.getMotor(2);
 Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
 
 //Create Servo Object
-Servo propeller;
+Servo myservo;
 int propeller_pin = 9;
 
 //define analog beam break input
@@ -24,6 +24,7 @@ bool is_magnetic=false;
 //Serial Communications Protocol
 char delimiter = ',';
 char end_delimiter = '.';
+
 //Print new serial data
 void decoder(String cmd) {
   if (cmd.charAt(0) == 'M') {
@@ -82,30 +83,46 @@ void hall_effect() {
 void servo_accept(){
   slow_movement();
   Serial.print("ACCEPT");
-  delay(3); 
+  delay(100); 
   stop_motors();                        
-  propeller.write(180);              // tell servo to go to 180 ****NEEDS CHANGING***
+ 
+  // sweep out
+  for (pos = 50; pos<=180; pos+=1){
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(10);
+  } 
 
-  //reset propeller goes here
+  //reset servo
+  myservo.write(90);
 }
 
 void servo_reject() {
   slow_movement();
   Serial.print("REJECT");
-  delay(3);
+  delay(100);
   stop_motors();                          
-  propeller.write(0);               // tell servo to go to 0  ****NEEDS CHANGING***
   
-  //reset propeller goes here
+  // sweep out
+  for (pos = 100; pos>=0; pos-=1){
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(10);
+  } 
+
+  //reset servo
+  myservo.write(90);
 }
 
-void tipper() {
+//tipper mechanism
+void tip() {
   Motor_Tip->setSpeed(255);
   Motor_Tip->run(FORWARD);
-  delay(2050);                      //Raise for set amount of time
-  Motor_Tip->setSpeed(50);          //Hold Motor Steady
+  delay(1800); //Raise for set amount of time
+  Motor_Tip->run(BACKWARD); //Release Motor
+  Motor_Tip->setSpeed(50); //Hold Motor Steady
   delay(500);
-  Motor_Tip->run(RELEASE);          //Release Motor
+  Motor_Tip->setSpeed(200);
+  delay(500);
+  Motor_Tip->run(RELEASE);
 }
 
 //Setup and Loop
@@ -151,4 +168,6 @@ void loop() {
       is_magnetic = false;         
       block_in_working_area = false;  
     }
+
+    //listen for tipping command
   }  
