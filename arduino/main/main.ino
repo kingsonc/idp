@@ -22,6 +22,7 @@ int hall_effect_pin=A1;
 bool is_magnetic=false;
 
 //Serial Communications Protocol
+char delimiter = ',';
 //Print new serial data
 void decoder(String cmd) {
   if (cmd.charAt(0) == 'M') {
@@ -116,9 +117,13 @@ void setup() {
 }
 
 void loop() {
-  //initialise adafruit 
-  AFMS.begin();
+    //initialise adafruit 
+    AFMS.begin();
 
+    //set new motor speed
+    cmd = Serial.readStringUntil(delimiter);
+    decoder(cmd);
+    
     //test beam break and hall effect
     beam_break();
     hall_effect();
