@@ -41,7 +41,7 @@ def PIDController(robot_state, path):
     """Calculates turning curvature based on current position and path
     """
     robot_pos = robot_state.lastseen_coords()
-    heading = math.pi/2 - robot_state.orientation()
+    heading = (robot_state.orientation()+(7/2)*math.pi) % (2*math.pi)
     orientation = robot_state.orientation()
     # Find closest path index
     rel_dist = distance.cdist([robot_pos], path)
@@ -68,15 +68,22 @@ def PIDController(robot_state, path):
     # Desired curvature
     curv = 2*abs(x_v)/target_dist_sqr
 
-    robot_vec = [math.cos(orientation), math.sin(orientation), 0]
-    heading_vec = [dx,dy,0]
+    print("Curvature: ", curv)
 
-    if np.cross(robot_vec, heading_vec)[2] > 0:
+    # robot_vec = [math.cos(orientation), math.sin(orientation), 0]
+    # heading_vec = [dx,dy,0]
+
+    # if np.cross(robot_vec, heading_vec)[2] > 0:
+    if x_v < 0:
+        print("turn left")
         ML = int(255-curv*config.KP)
         MR = 255
     else:
+        print("turn right")
         ML = 255
         MR = int(255-curv*config.KP)
+
+    print(x_v,y_v)
 
     print("ML:", ML)
     print("MR:", MR)
