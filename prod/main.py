@@ -3,7 +3,7 @@ import numpy as np
 
 import becky.comms as comms
 import becky.fuelcell as fuelcell
-import becky.motor as motor
+import becky.motor_controller as motor_controller
 import becky.path_finder as path_finder
 import becky.plotter as plotter
 import becky.robot as robot
@@ -18,17 +18,14 @@ if __name__ == '__main__':
     cv2.resizeWindow('Camera', 1200,600)
 
     ### Uncomment one of below to choose between live webcam or recorded video
-    # camera = webcam.Webcam()
-    camera = webcam.VideoClip('../test_files/output1.avi')
+    camera = webcam.Webcam()
+    # camera = webcam.VideoClip('../test_files/output1.avi')
 
     becky = robot.RobotState()
     fctracker = fuelcell.FuelCellsTracker()
     navigation = path_finder.PathFinder()
     navigation.process.start()
-    arduino = comms.ArduinoNC('COM15')
-
-    motor_L = motor.Motor("L")
-    motor_R = motor.Motor("R")
+    arduino = comms.Arduino('COM6')
 
     path = None
 
@@ -59,7 +56,9 @@ if __name__ == '__main__':
                     # Push new values into queues
                     navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
                     navigation.robot_coords_q.put_nowait(robot_coords)
-                    navigation.target_coords_q.put_nowait((150,50))
+                    # navigation.target_coords_q.put_nowait((150,50))
+                    navigation.target_coords_q.put_nowait(visible_fuelcells[0].map_coord_cm)
+                    print(visible_fuelcells[0].map_coord_cm)
                 except:
                     pass
 
@@ -71,12 +70,11 @@ if __name__ == '__main__':
 
         # Calculate motor speeds based on path
         if path:
-            table_plot = path_finder.plot_path(table_plot,path)
-            ML, MR = motor.PIDController(becky, path)
+            ML, MR, path_pos, target_coords = motor_controller.PIDController(becky, path)
+            table_plot = path_finder.plot_path(table_plot,path, path_pos, target_coords)
 
-            motor_L.speed = ML
-            motor_R.speed = MR
-            arduino.send(motor_L, motor_R)
+            arduino.motor_L.speed = ML
+            arduino.motor_R.speed = MR
 
         overall = np.hstack((table_plot,frame))
         cv2.imshow('Camera', overall)
@@ -87,8 +85,8 @@ if __name__ == '__main__':
         print(f"FPS: {fps}")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            navigation.process.terminate()
-            navigation.process.join()
-            arduino.running = False
-            camera.running = False
+            # navigation.process.terminate()
+            # navigation.process.join()
+            # arduino.running = False
+            # camera.running = False
             break

@@ -12,27 +12,28 @@ class Config:
     TABLE_SIZE = (240,240)
 
     # Fuel cell tracking
-    BLUE_LOWER_THRESH = np.array([85, 60, 100])
+    BLUE_LOWER_THRESH = np.array([90, 70, 130])
     BLUE_UPPER_THRESH = np.array([120, 255, 255])
 
     # Robot tracking
-    GREEN_LOWER_THRESH = np.array([60, 100, 100])
-    GREEN_UPPER_THRESH = np.array([95, 255, 255])
+    GREEN_LOWER_THRESH = np.array([60, 100, 120])
+    GREEN_UPPER_THRESH = np.array([90, 255, 255])
 
     MAP_COORDS = np.float32([[1425,1395],[1473,604],[0,482],[0,977]])
 
     # PID Controller
-    LOOK_AHEAD = 5
-    KP = 1e4
+    LOOK_AHEAD = 25
+    KP = 1500
+    MAX_SPD = 150
 
 
 class Table3Config(Config):
     """Specific values only applicable to table 3"""
     TABLE = 3
 
-    CAM_BRIGHTNESS = 60
-    CAM_CONTRAST = 48
-    CAM_SATURATION = 70
+    CAM_BRIGHTNESS = 50
+    CAM_CONTRAST = 50
+    CAM_SATURATION = 80
 
     # Perspective transformation
     CAMERA_COORDS = np.float32([[1417,1393],[1466,606],[10,495],[4,999]])

@@ -42,6 +42,12 @@ class RobotState():
         else:
             return (0,0)
 
+    def lastseen_coords_cm(self):
+        if self.tracked_pts:
+            return self.tracked_pts_cm[0]
+        else:
+            return (0,0)
+
     def orientation(self):
         if len(self.tracked_pts) <= 5:
             return self.last_orientation

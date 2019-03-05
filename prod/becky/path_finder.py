@@ -77,6 +77,7 @@ class PathFinder:
 
             # If start or end positions do not exist, continue
             if not start or not end:
+                time.sleep(0.01)
                 continue
 
             # Generate map based on current fuelcell positions
@@ -170,10 +171,13 @@ class PathFinder:
 
         return path
 
-def plot_path(plot,path):
+def plot_path(plot,path, pos, target):
     """Plot path onto map
     """
     for i in range(len(path)-1):
         cv2.line(plot, (int(path[i][0]*92/15), int(path[i][1]*92/15)),
                  (int(path[i+1][0]*92/15), int(path[i+1][1]*92/15)),(0,255,0),3)
+
+    cv2.circle(plot, (int(pos[0]*92/15), int(pos[1]*92/15)), 10, (255,255,0),-1)
+    cv2.circle(plot, (int(target[0]*92/15), int(target[1]*92/15)), 10, (255,255,0),-1)
     return plot
