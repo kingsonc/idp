@@ -10,7 +10,9 @@ class Arduino:
         line = self.ser.read_until('\r\n')
         print("Data: " + str(line))
 
-        self.send_cmds = ""
+        self.motor_L = Motor("L")
+        self.motor_R = Motor("R")
+
         self.wait_send = False
         self.wait_rcv = False
 
@@ -26,33 +28,32 @@ class Arduino:
                     line = self.ser.read_until('\r\n')
                     print("Data: " + str(line))
                     self.wait_rcv = False
-            elif self.wait_send:
-                with self.send_cmds_lock:
-                    self.send_cmds += "."
-                    print("Sending: " + str(self.send_cmds.encode()))
-                    self.ser.write(self.send_cmds.encode())
-                    self.send_cmds = ""
+            else:
+                send_cmds = self.generate_cmds()
+                if send_cmds:
+                    send_cmds += "."
+                    print("Sending: " + str(send_cmds.encode()))
+                    self.ser.write(send_cmds.encode())
                     self.wait_rcv = True
                     self.wait_send = False
-            else:
-                time.sleep(0.01)
+                else:
+                    time.sleep(0.01)
 
-    def send(self, motor_L, motor_R):
-        if not self.wait_rcv:
-            self.send_cmds = ""
-            if motor_L.updated:
-                with self.send_cmds_lock:
-                    self.send_cmds += (motor_L.precmd + motor_L.direction
-                                       + str(motor_L.speed).zfill(3) + ',')
-                # motor_L.updated = False
-                self.wait_send = True
+    def generate_cmds(self):
+        cmds = ""
+        if self.motor_L.updated:
+            cmds += (self.motor_L.precmd + self.motor_L.direction
+                     + str(self.motor_L.speed).zfill(3) + ',')
+            self.motor_L.updated = False
+            self.wait_send = True
 
-            if motor_R.updated:
-                with self.send_cmds_lock:
-                    self.send_cmds += (motor_R.precmd + motor_R.direction
-                                       + str(motor_R.speed).zfill(3) + ',')
-                # motor_R.updated = False
-                self.wait_send = True
+        if self.motor_R.updated:
+            cmds += (self.motor_R.precmd + self.motor_R.direction
+                     + str(self.motor_R.speed).zfill(3) + ',')
+            self.motor_R.updated = False
+            self.wait_send = True
+
+        return cmds
 
     def release(self):
         self.ser.close()
@@ -62,7 +63,9 @@ class Arduino:
 
 class ArduinoNC:
     def __init__(self, port):
-        self.send_cmds = ""
+        self.motor_L = Motor("L")
+        self.motor_R = Motor("R")
+
         self.wait_send = False
         self.wait_rcv = False
 
@@ -74,35 +77,68 @@ class ArduinoNC:
     def update(self):
         while self.running:
             if self.wait_rcv:
-                    self.wait_rcv = False
-            elif self.wait_send:
-                    self.send_cmds += "."
-                    print("Sending: " + str(self.send_cmds.encode()))
-                    self.send_cmds = ""
+                self.wait_rcv = False
+            else:
+                send_cmds = self.generate_cmds()
+                if send_cmds:
+                    send_cmds += "."
+                    print("Sending: " + str(send_cmds.encode()))
                     self.wait_rcv = True
                     self.wait_send = False
-            time.sleep(1)
 
-    def send(self, motor_L, motor_R):
-        if not self.wait_rcv:
-            self.send_cmds = ""
-            if motor_L.updated:
-                with self.send_cmds_lock:
-                    self.send_cmds += (motor_L.precmd + motor_L.direction
-                                       + str(motor_L.speed).zfill(3) + ',')
-                # motor_L.updated = False
-                self.wait_send = True
+            time.sleep(0.01)
 
-            if motor_R.updated:
-                with self.send_cmds_lock:
-                    self.send_cmds += (motor_R.precmd + motor_R.direction
-                                       + str(motor_R.speed).zfill(3) + ',')
-                # motor_R.updated = False
-                self.wait_send = True
+    def generate_cmds(self):
+        cmds = ""
+        if self.motor_L.updated:
+            cmds += (self.motor_L.precmd + self.motor_L.direction
+                     + str(self.motor_L.speed).zfill(3) + ',')
+            self.motor_L.updated = False
+            self.wait_send = True
+
+        if self.motor_R.updated:
+            cmds += (self.motor_R.precmd + self.motor_R.direction
+                     + str(self.motor_R.speed).zfill(3) + ',')
+            self.motor_R.updated = False
+            self.wait_send = True
+
+        return cmds
 
     def release(self):
         self.thread.join()
         return
+
+
+class Motor:
+    def __init__(self, side=None):
+        self.updated = False
+        self._direction = "F"
+        self._speed = 0
+
+        if side == 'L':
+            self.precmd = "ML"
+        elif side == 'R':
+            self.precmd = "MR"
+
+    @property
+    def direction(self):
+        return self._direction
+
+    @property
+    def speed(self):
+        return self._speed
+
+    @direction.setter
+    def direction(self, value):
+        if self._direction != value:
+            self._direction = value
+            self.updated = True
+
+    @speed.setter
+    def speed(self, value):
+        if self._speed != value:
+            self._speed = value
+            self.updated = True
 
 
 # class Arduino:

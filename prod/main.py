@@ -27,9 +27,6 @@ if __name__ == '__main__':
     navigation.process.start()
     arduino = comms.ArduinoNC('COM15')
 
-    motor_L = motor.Motor("L")
-    motor_R = motor.Motor("R")
-
     path = None
 
     while True:
@@ -74,9 +71,8 @@ if __name__ == '__main__':
             ML, MR, path_pos, target_coords = motor.PIDController(becky, path)
             table_plot = path_finder.plot_path(table_plot,path, path_pos, target_coords)
 
-            motor_L.speed = ML
-            motor_R.speed = MR
-            arduino.send(motor_L, motor_R)
+            arduino.motor_L.speed = ML
+            arduino.motor_R.speed = MR
 
         overall = np.hstack((table_plot,frame))
         cv2.imshow('Camera', overall)
@@ -87,8 +83,8 @@ if __name__ == '__main__':
         print(f"FPS: {fps}")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            navigation.process.terminate()
-            navigation.process.join()
-            arduino.running = False
-            camera.running = False
+            # navigation.process.terminate()
+            # navigation.process.join()
+            # arduino.running = False
+            # camera.running = False
             break
