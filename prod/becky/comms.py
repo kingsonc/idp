@@ -20,7 +20,7 @@ class Arduino:
         self.thread.start()
 
     def update(self):
-        while self.runnin:
+        while self.running:
             if self.wait_rcv:
                 if self.ser.in_waiting >0:
                     line = self.ser.read_until('\r\n')
@@ -38,19 +38,21 @@ class Arduino:
                 time.sleep(0.01)
 
     def send(self, motor_L, motor_R):
-        if motor_L.updated:
-            with self.send_cmds_lock:
-                self.send_cmds += (motor_L.precmd + motor_L.direction
-                                   + str(motor_L.speed).zfill(3) + ',')
-            motor_L.updated = False
-            self.wait_send = True
+        if not self.wait_rcv:
+            self.send_cmds = ""
+            if motor_L.updated:
+                with self.send_cmds_lock:
+                    self.send_cmds += (motor_L.precmd + motor_L.direction
+                                       + str(motor_L.speed).zfill(3) + ',')
+                # motor_L.updated = False
+                self.wait_send = True
 
-        if motor_R.updated:
-            with self.send_cmds_lock:
-                self.send_cmds += (motor_R.precmd + motor_R.direction
-                                   + str(motor_R.speed).zfill(3) + ',')
-            motor_R.updated = False
-            self.wait_send = True
+            if motor_R.updated:
+                with self.send_cmds_lock:
+                    self.send_cmds += (motor_R.precmd + motor_R.direction
+                                       + str(motor_R.speed).zfill(3) + ',')
+                # motor_R.updated = False
+                self.wait_send = True
 
     def release(self):
         self.ser.close()
@@ -82,20 +84,21 @@ class ArduinoNC:
             time.sleep(1)
 
     def send(self, motor_L, motor_R):
-        if motor_L.updated:
-            with self.send_cmds_lock:
-                self.send_cmds += (motor_L.precmd + motor_L.direction
-                                   + str(motor_L.speed).zfill(3) + ',')
-            motor_L.updated = False
-            self.wait_send = True
+        if not self.wait_rcv:
+            self.send_cmds = ""
+            if motor_L.updated:
+                with self.send_cmds_lock:
+                    self.send_cmds += (motor_L.precmd + motor_L.direction
+                                       + str(motor_L.speed).zfill(3) + ',')
+                # motor_L.updated = False
+                self.wait_send = True
 
-        if motor_R.updated:
-            with self.send_cmds_lock:
-                self.send_cmds += (motor_R.precmd + motor_R.direction
-                                   + str(motor_R.speed).zfill(3) + ',')
-            motor_R.updated = False
-            self.wait_send = True
-
+            if motor_R.updated:
+                with self.send_cmds_lock:
+                    self.send_cmds += (motor_R.precmd + motor_R.direction
+                                       + str(motor_R.speed).zfill(3) + ',')
+                # motor_R.updated = False
+                self.wait_send = True
 
     def release(self):
         self.thread.join()

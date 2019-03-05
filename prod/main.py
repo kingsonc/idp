@@ -71,8 +71,8 @@ if __name__ == '__main__':
 
         # Calculate motor speeds based on path
         if path:
-            table_plot = path_finder.plot_path(table_plot,path)
-            ML, MR = motor.PIDController(becky, path)
+            ML, MR, path_pos, target_coords = motor.PIDController(becky, path)
+            table_plot = path_finder.plot_path(table_plot,path, path_pos, target_coords)
 
             motor_L.speed = ML
             motor_R.speed = MR

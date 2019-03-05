@@ -22,8 +22,9 @@ class Config:
     MAP_COORDS = np.float32([[1425,1395],[1473,604],[0,482],[0,977]])
 
     # PID Controller
-    LOOK_AHEAD = 5
-    KP = 1e4
+    LOOK_AHEAD = 15
+    KP = 100
+    MAX_SPD = 200
 
 
 class Table3Config(Config):
