@@ -83,7 +83,7 @@ class FuelCell:
         self.radioactive = None
         self.visited = False
         self.pickedUp = False
-        self.target = False
+        self.target = True
         self.disappearedFor = 0
 
         self.coord = coord

@@ -18,14 +18,14 @@ if __name__ == '__main__':
     cv2.resizeWindow('Camera', 1200,600)
 
     ### Uncomment one of below to choose between live webcam or recorded video
-    # camera = webcam.Webcam()
-    camera = webcam.VideoClip('../test_files/output1.avi')
+    camera = webcam.Webcam()
+    # camera = webcam.VideoClip('../test_files/output1.avi')
 
     becky = robot.RobotState()
     fctracker = fuelcell.FuelCellsTracker()
     navigation = path_finder.PathFinder()
     navigation.process.start()
-    arduino = comms.ArduinoNC('COM15')
+    arduino = comms.Arduino('COM6')
 
     path = None
 
@@ -56,7 +56,9 @@ if __name__ == '__main__':
                     # Push new values into queues
                     navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
                     navigation.robot_coords_q.put_nowait(robot_coords)
-                    navigation.target_coords_q.put_nowait((150,50))
+                    # navigation.target_coords_q.put_nowait((150,50))
+                    navigation.target_coords_q.put_nowait(visible_fuelcells[0].map_coord_cm)
+                    print(visible_fuelcells[0].map_coord_cm)
                 except:
                     pass
 

@@ -152,7 +152,7 @@ void setup() {
   AFMS.begin();
   stop_motors();
   Serial.begin(9600);                           //initialise serial
-  Serial.setTimeout(500)
+  Serial.setTimeout(500);
   Serial.write("READY");
 }
 

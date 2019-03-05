@@ -77,6 +77,7 @@ class PathFinder:
 
             # If start or end positions do not exist, continue
             if not start or not end:
+                time.sleep(0.01)
                 continue
 
             # Generate map based on current fuelcell positions

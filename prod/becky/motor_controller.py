@@ -17,7 +17,7 @@ def PIDController(robot_state, path):
 
     # Find look ahead target coordinate
     target_idx = path_idx - config.LOOK_AHEAD
-    if target_idx < len(path):
+    if target_idx < len(path) and target_idx >= 0:
         target_coord = path[target_idx]
     else:
         target_coord = path[-1]
@@ -56,6 +56,20 @@ def PIDController(robot_state, path):
         print("turn right")
         ML = config.MAX_SPD
         MR = int(config.MAX_SPD - curv*config.KP)
+
+    if ML < 0:
+        MR += abs(ML)*3
+        ML = 0
+    elif MR < 0:
+        ML += abs(MR)*3
+        MR = 0
+
+    elif ML < 100:
+        MR += (100-ML)*3
+        ML = 100
+    elif MR < 100:
+        ML += (100-ML)*3
+        MR = 100
 
     print("ML:", ML)
     print("MR:", MR)
