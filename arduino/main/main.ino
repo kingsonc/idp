@@ -55,8 +55,8 @@ void decoder(String cmd) {
 
 //define slow movement forwards
 void slow_movement() {
-    Motor_L->setSpeed(100);
-    Motor_R->setSpeed(100);
+    Motor_L->setSpeed(75);
+    Motor_R->setSpeed(75);
     Motor_L->run(FORWARD);
     Motor_R->run(FORWARD);
 }
@@ -96,8 +96,9 @@ void hall_effect() {
 //Accept and reject mechanism
 void servo_accept(){
   slow_movement();
+  myservo.write(60);
   Serial.print("ACCEPT");
-  delay(100); 
+  delay(1000); 
   stop_motors();                        
  
   // sweep out
@@ -107,24 +108,22 @@ void servo_accept(){
   } 
 
   //reset servo
-  myservo.write(90);
+  myservo.write(85);
 }
 
 void servo_reject() {
+  //reset servo
+  myservo.write(85);
   slow_movement();
   Serial.print("REJECT");
-  delay(100);
-  stop_motors();                          
-  
-  // sweep out
+}               
+  /*// sweep out
   for (int pos = 100; pos>=0; pos-=1){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(10);
   } 
-
-  //reset servo
-  myservo.write(90);
 }
+*/
 
 //tipper mechanism
 void tip() {
@@ -146,13 +145,13 @@ void setup() {
   
   //initialise servo object and set to neutral
   myservo.attach(servo_pin);
-  myservo.write(90);       
+  myservo.write(85);       
 
   //Initialise Motors
   AFMS.begin();
   stop_motors();
   Serial.begin(9600);                           //initialise serial
-  Serial.setTimeout(500)
+  Serial.setTimeout(500);
   Serial.write("READY");
 }
 
