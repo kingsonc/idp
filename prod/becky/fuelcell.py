@@ -21,7 +21,7 @@ class FuelCellsTracker:
         if len(self.fuelcells) == 0:
             for i in range(len(new_coords)):
                 self.register(new_coords[i])
-        else:
+        elif new_coords:
             FCIDs = list(range(len(self.fuelcells)))
             prev_coords = [fc.coord for fc in self.fuelcells.values()]
 

@@ -14,12 +14,13 @@ class Arduino:
         self.wait_send = False
         self.wait_rcv = False
 
+        self.running = True
         self.thread = threading.Thread(target=self.update, daemon=True)
         self.send_cmds_lock = threading.Lock()
         self.thread.start()
 
     def update(self):
-        while True:
+        while self.runnin:
             if self.wait_rcv:
                 if self.ser.in_waiting >0:
                     line = self.ser.read_until('\r\n')
@@ -63,12 +64,13 @@ class ArduinoNC:
         self.wait_send = False
         self.wait_rcv = False
 
+        self.running = True
         self.thread = threading.Thread(target=self.update, daemon=True)
         self.send_cmds_lock = threading.Lock()
         self.thread.start()
 
     def update(self):
-        while True:
+        while self.running:
             if self.wait_rcv:
                     self.wait_rcv = False
             elif self.wait_send:

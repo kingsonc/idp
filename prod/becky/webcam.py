@@ -5,7 +5,7 @@ from config import current_config as config
 class Webcam:
     """Asynchronous threaded version of webcam. Aim to provide higher fps"""
     def __init__(self):
-        self.cam = cv2.VideoCapture(cv2.CAP_DSHOW + 1)
+        self.cam = cv2.VideoCapture(cv2.CAP_DSHOW)
 
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, config.CAM_WIDTH)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, config.CAM_HEIGHT)
@@ -15,12 +15,13 @@ class Webcam:
 
         _, self.frame = self.cam.read()
 
+        self.running = True
         self.thread = threading.Thread(target=self.update, daemon=True)
         self.lock = threading.Lock()
         self.thread.start()
 
     def update(self):
-        while True:
+        while self.running:
             ok, frame = self.cam.read()
             if not ok:
                 raise Exception('Webcam feed broken')
@@ -63,7 +64,7 @@ class VideoClip:
 #         self.cam.set(cv2.CAP_PROP_CONTRAST, config.CAM_CONTRAST)
 #         self.cam.set(cv2.CAP_PROP_SATURATION, config.CAM_SATURATION)
 
-        # _, frame = self.cam.read()
+#         _, frame = self.cam.read()
 
 
 #     def read(self):
