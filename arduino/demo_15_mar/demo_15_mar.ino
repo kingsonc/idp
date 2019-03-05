@@ -69,30 +69,6 @@ void stop_motors() {
   Motor_R->run(FORWARD);
 }
 
-//Beam Break Testing Subroutine
-void beam_break() {
-  int val = analogRead(photodiode);
-  if (val >= 700) {                                   //set threshold
-       Serial.println("There is a block in the way!");
-       block_in_working_area = true;
-  }
-  else {
-        block_in_working_area=false;
-  }
-}
-
-//Hall Effect Testing Subroutine
-void hall_effect() {
-  int magnetic = analogRead(hall_effect_pin);
-  int threshold = 350-magnetic;
-    if (abs(threshold) >=50) {                          //set threshold
-      is_magnetic = true;
-    }
-    else {
-      is_magnetic = false;
-    }
-}
-
 //Accept and reject mechanism
 void servo_accept(){
   slow_movement();
@@ -103,11 +79,11 @@ void servo_accept(){
   // sweep out
   for (int pos = 50; pos<=180; pos+=1){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(10);
+    delay(5);
   } 
 
   //reset servo
-  myservo.write(90);
+  myservo.write(60);
 }
 
 void servo_reject() {
@@ -123,7 +99,7 @@ void servo_reject() {
   } 
 
   //reset servo
-  myservo.write(90);
+  myservo.write(60);
 }
 
 //tipper mechanism
@@ -146,44 +122,40 @@ void setup() {
   
   //initialise servo object and set to neutral
   myservo.attach(servo_pin);
-  myservo.write(90);       
+  myservo.write(60);       
 
   //Initialise Motors
   AFMS.begin();
   stop_motors();
   Serial.begin(9600);                           //initialise serial
-  Serial.setTimeout(500)
   Serial.write("READY");
 }
 
 void loop() {
     //set new motor speed
-    String rc = Serial.readStringUntil(end_delimiter);
-    int delimiterIdx = rc.indexOf(delimiter);
-    while (delimiterIdx > 0) {
-      String cmd = rc.substring(0,delimiterIdx);
-      decoder(cmd);
-      rc.remove(0, delimiterIdx+1);
-      delimiterIdx = rc.indexOf(delimiter);
-    }
-    Serial.println('A');
-    
-    //test beam break and hall effect
-    beam_break();
-    
-    if (block_in_working_area == true) {
-      hall_effect();                            //test hall effect
-      
-      if(is_magnetic==false) {
-        servo_accept();}                         //accept block, send serial
-
-      else if (is_magnetic == true) {
-        servo_reject();}                         //reject block, send serial
-
-      //reset
-      is_magnetic = false;         
-      block_in_working_area = false;  
+    if (Serial.available()>0){
+      String rc = Serial.readStringUntil(end_delimiter);
+      int delimiterIdx = rc.indexOf(delimiter);
+      while (delimiterIdx > 0) {
+        String cmd = rc.substring(0,delimiterIdx);
+        decoder(cmd);
+        rc.remove(0, delimiterIdx+1);
+        delimiterIdx = rc.indexOf(delimiter);
+      }
+      Serial.println('A');
     }
 
-    //listen for tipping command
+    /*if (next_command=="STOP"){
+      slow_movement();
+      servo_accept();                         //accept block, send serial
+      Serial.println("accepted");
+      next_command=="RandomString";
+    }
+    else if (next_command=="TIP"){
+      stop_motors();
+      tip();
+      Serial.println("Tipped");
+      next_command=="RandomString";
+    }
+    */
   }  

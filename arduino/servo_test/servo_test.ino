@@ -17,9 +17,8 @@ int pos = 0;    // variable to store the servo position
 void servo_accept(){
   for (pos = 50; pos<=180; pos+=1){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(10);
+    delay(8);
   } 
-  myservo.write(90);
 }
 
 void servo_reject(){
@@ -27,7 +26,6 @@ void servo_reject(){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(10);
   } 
-  myservo.write(90);
 }
 
 void tip() {
@@ -45,9 +43,11 @@ void tip() {
 void setup() {
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
   AFMS.begin();
+  //myservo.write(85);
+  myservo.write(60);
   servo_accept();
+  myservo.write(60);
   tip();
-  servo_reject();
 }
 
 void loop() {
