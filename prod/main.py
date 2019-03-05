@@ -3,7 +3,7 @@ import numpy as np
 
 import becky.comms as comms
 import becky.fuelcell as fuelcell
-import becky.motor as motor
+import becky.motor_controller as motor_controller
 import becky.path_finder as path_finder
 import becky.plotter as plotter
 import becky.robot as robot
@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
         # Calculate motor speeds based on path
         if path:
-            ML, MR, path_pos, target_coords = motor.PIDController(becky, path)
+            ML, MR, path_pos, target_coords = motor_controller.PIDController(becky, path)
             table_plot = path_finder.plot_path(table_plot,path, path_pos, target_coords)
 
             arduino.motor_L.speed = ML
