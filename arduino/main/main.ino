@@ -5,13 +5,13 @@
 
 // Create the motor shield object and set addresses.
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
-Adafruit_DCMotor *Motor_L = AFMS.getMotor(1);
-Adafruit_DCMotor *Motor_R = AFMS.getMotor(2);
+Adafruit_DCMotor *Motor_R = AFMS.getMotor(1);
+Adafruit_DCMotor *Motor_L = AFMS.getMotor(2);
 Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
 
 //Create Servo Object
-Servo propeller;
-int propeller_pin = 9;
+Servo myservo;
+int servo_pin = 9;
 
 //define analog beam break input
 int photodiode=A0;
@@ -24,6 +24,7 @@ bool is_magnetic=false;
 //Serial Communications Protocol
 char delimiter = ',';
 char end_delimiter = '.';
+
 //Print new serial data
 void decoder(String cmd) {
   if (cmd.charAt(0) == 'M') {
@@ -32,9 +33,23 @@ void decoder(String cmd) {
      //set motor speeds using commands received from serial
      if (cmd.charAt(1) == 'L') {
       Motor_L->setSpeed(spd);
-    } else if (cmd.charAt(1) == 'R'){
+      
+      //check direction
+      if (cmd.charAt(2) == 'F') {
+        Motor_L->run(FORWARD);}  
+      else if (cmd.charAt(2) == 'R'){
+        Motor_L->run(BACKWARD);}       
+      }
+      
+     else if (cmd.charAt(1) == 'R'){
       Motor_R->setSpeed(spd);
-    }      
+      
+      //check direction
+      if (cmd.charAt(2) == 'F') {
+        Motor_R->run(FORWARD);}  
+      else if (cmd.charAt(2) == 'R'){
+        Motor_R->run(BACKWARD);}  
+      }      
   }
 }
 
@@ -81,31 +96,47 @@ void hall_effect() {
 //Accept and reject mechanism
 void servo_accept(){
   slow_movement();
-  Serial.print("Block Accepted");
-  delay(3); 
+  Serial.print("ACCEPT");
+  delay(100); 
   stop_motors();                        
-  propeller.write(180);              // tell servo to go to 180 ****NEEDS CHANGING***
+ 
+  // sweep out
+  for (int pos = 50; pos<=180; pos+=1){
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(10);
+  } 
 
-  //reset propeller goes here
+  //reset servo
+  myservo.write(90);
 }
 
 void servo_reject() {
   slow_movement();
-  Serial.print("Block Rejected");
-  delay(3);
+  Serial.print("REJECT");
+  delay(100);
   stop_motors();                          
-  propeller.write(0);               // tell servo to go to 0  ****NEEDS CHANGING***
   
-  //reset propeller goes here
+  // sweep out
+  for (int pos = 100; pos>=0; pos-=1){
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(10);
+  } 
+
+  //reset servo
+  myservo.write(90);
 }
 
-void tipper() {
+//tipper mechanism
+void tip() {
   Motor_Tip->setSpeed(255);
   Motor_Tip->run(FORWARD);
-  delay(2050); //Raise for set amount of time
+  delay(1800); //Raise for set amount of time
+  Motor_Tip->run(BACKWARD); //Release Motor
   Motor_Tip->setSpeed(50); //Hold Motor Steady
   delay(500);
-  Motor_Tip->run(RELEASE); //Release Motor
+  Motor_Tip->setSpeed(200);
+  delay(500);
+  Motor_Tip->run(RELEASE);
 }
 
 //Setup and Loop
@@ -113,14 +144,15 @@ void setup() {
   //initialise photodiode pin input
   pinMode(photodiode,INPUT); 
   
-  //initialise servo object
-  propeller.attach(propeller_pin);       
+  //initialise servo object and set to neutral
+  myservo.attach(servo_pin);
+  myservo.write(90);       
 
   //Initialise Motors
   AFMS.begin();
   stop_motors();
-  Serial.begin(9600);        //initialise serial
-  Serial.write("Arduino is Ready.");
+  Serial.begin(9600);                           //initialise serial
+  Serial.write("READY");
 }
 
 void loop() {
@@ -137,15 +169,20 @@ void loop() {
     
     //test beam break and hall effect
     beam_break();
-    hall_effect();
-    if (block_in_working_area == true && is_magnetic==false) {
-      servo_accept();               //accept block
-      is_magnetic = false;          //reset
-      block_in_working_area = false;
+    
+    if (block_in_working_area == true) {
+      hall_effect();                            //test hall effect
+      
+      if(is_magnetic==false) {
+        servo_accept();}                         //accept block, send serial
+
+      else if (is_magnetic == true) {
+        servo_reject();}                         //reject block, send serial
+
+      //reset
+      is_magnetic = false;         
+      block_in_working_area = false;  
     }
-    else if (block_in_working_area == true && is_magnetic==true) {
-      servo_reject();               //reject block
-      is_magnetic = false;          //reset
-      block_in_working_area = false;
-    }
+
+    //listen for tipping command
   }  
