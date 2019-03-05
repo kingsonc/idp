@@ -7,10 +7,4 @@
  void loop() {   
   int val = analogRead(A0);
   Serial.println(val);          // prints the values from the sensor in serial monitor  
-  if (val >= 700) {
-    //run subroutine here
-    Serial.println("There is a block in the way!");
-  }
-  
-  delay(100);
   }  
