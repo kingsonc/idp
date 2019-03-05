@@ -1,5 +1,3 @@
-import sys
-
 import cv2
 import numpy as np
 
@@ -57,10 +55,13 @@ if __name__ == '__main__':
             except:
                 pass
             finally:
-                # Push new values into queues
-                navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
-                navigation.robot_coords_q.put_nowait(robot_coords)
-                navigation.target_coords_q.put_nowait((150,50))
+                try:
+                    # Push new values into queues
+                    navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
+                    navigation.robot_coords_q.put_nowait(robot_coords)
+                    navigation.target_coords_q.put_nowait((150,50))
+                except:
+                    pass
 
         # Get new path if available
         try:
@@ -86,7 +87,8 @@ if __name__ == '__main__':
         print(f"FPS: {fps}")
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            sys.exit()
-            # arduino.release()
-            # camera.release()
+            navigation.process.terminate()
+            navigation.process.join()
+            arduino.running = False
+            camera.running = False
             break
