@@ -72,7 +72,7 @@ void stop_motors() {
 //Beam Break Testing Subroutine
 void beam_break() {
   int val = analogRead(photodiode);
-  if (val >= 700) {                                   //set threshold
+  if (val <= 350) {                                   //set threshold
        Serial.println("There is a block in the way!");
        block_in_working_area = true;
   }
@@ -95,17 +95,18 @@ void hall_effect() {
 //Accept and reject mechanism
 void servo_accept(){
   slow_movement();
-  myservo.write(60);
+  myservo.write(40);
   Serial.print("ACCEPT");
-  delay(1000); 
-  stop_motors();                        
- 
+  delay(2300); 
+                          
   // sweep out
-  for (int pos = 50; pos<=180; pos+=1){
+  for (int pos = 40; pos<=180; pos+=1){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(10);
+    delay(5);
   } 
-
+  myservo.write(180);
+  stop_motors();
+  delay(2000);
   //reset servo
   myservo.write(85);
 }
@@ -165,12 +166,12 @@ void loop() {
       rc.remove(0, delimiterIdx+1);
       delimiterIdx = rc.indexOf(delimiter);
     }
-    Serial.println('A');
+    //Serial.println('A');
   }
-  Serial.println("Block in working area");
-  Serial.println(block_in_working_area);
-  Serial.println("is magnetic");
-  Serial.println(is_magnetic);
+/*  Serial.println("Block in working area");
+  */Serial.println(analogRead(A0));
+  /*Serial.println("is magnetic");
+  Serial.println(is_magnetic);*/
   
   //test beam break and hall effect
   beam_break();
