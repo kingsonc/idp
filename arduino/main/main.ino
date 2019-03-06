@@ -155,6 +155,7 @@ void setup() {
 }
 
 void loop() {
+  if (Serial.available() > 0) {
     //set new motor speed
     String rc = Serial.readStringUntil(end_delimiter);
     int delimiterIdx = rc.indexOf(delimiter);
@@ -165,28 +166,28 @@ void loop() {
       delimiterIdx = rc.indexOf(delimiter);
     }
     Serial.println('A');
-
-    Serial.println("Block in working area");
-    Serial.println(block_in_working_area);
-    Serial.println("is magnetic");
-    Serial.println(is_magnetic);
+  }
+  Serial.println("Block in working area");
+  Serial.println(block_in_working_area);
+  Serial.println("is magnetic");
+  Serial.println(is_magnetic);
+  
+  //test beam break and hall effect
+  beam_break();
+  
+  if (block_in_working_area == true) {
+    hall_effect();                            //test hall effect
     
-    //test beam break and hall effect
-    beam_break();
-    
-    if (block_in_working_area == true) {
-      hall_effect();                            //test hall effect
-      
-      if(is_magnetic==false) {
-        servo_accept();}                         //accept block, send serial
+    if(is_magnetic==false) {
+      servo_accept();}                         //accept block, send serial
 
-      else if (is_magnetic == true) {
-        servo_reject();}                         //reject block, send serial
+    else if (is_magnetic == true) {
+      servo_reject();}                         //reject block, send serial
 
-      //reset
-      is_magnetic = false;         
-      block_in_working_area = false;  
-    }
+    //reset
+    is_magnetic = false;         
+    block_in_working_area = false;  
+  }
 
-    //listen for tipping command
-  }  
+  //listen for tipping command
+}
