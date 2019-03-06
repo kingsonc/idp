@@ -129,12 +129,25 @@ void servo_reject() {
 void tip() {
   Motor_Tip->setSpeed(255);
   Motor_Tip->run(FORWARD);
-  delay(1800); //Raise for set amount of time
-  Motor_Tip->run(BACKWARD); //Release Motor
+  delay(2000); //Raise for set amount of time
   Motor_Tip->setSpeed(50); //Hold Motor Steady
-  delay(500);
+  delay(2000);
+  Motor_Tip->run(BACKWARD);
   Motor_Tip->setSpeed(200);
   delay(500);
+  Motor_Tip->run(RELEASE);
+}
+
+void tipper_liftoff() {
+  Motor_Tip->setSpeed(255);
+  Motor_Tip->run(FORWARD);
+  delay(200);
+  Motor_Tip->setSpeed(50);
+}
+
+void tipper_landing() {
+  Motor_Tip->run(BACKWARD);
+  delay(250);
   Motor_Tip->run(RELEASE);
 }
 
@@ -150,6 +163,7 @@ void setup() {
   //Initialise Motors
   AFMS.begin();
   stop_motors();
+  tipper_liftoff();
   Serial.begin(9600);                           //initialise serial
   Serial.setTimeout(500);
   Serial.write("READY");
@@ -168,13 +182,15 @@ void loop() {
     Serial.println('A');
     
     //test beam break and hall effect
-    beam_break();
+//    beam_break();
     
     if (block_in_working_area == true) {
       hall_effect();                            //test hall effect
       
       if(is_magnetic==false) {
-        servo_accept();}                         //accept block, send serial
+        tipper_landing();
+        servo_accept();
+        tipper_liftoff();}                       //accept block, send serial
 
       else if (is_magnetic == true) {
         servo_reject();}                         //reject block, send serial
