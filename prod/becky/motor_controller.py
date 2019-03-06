@@ -54,11 +54,12 @@ def PIDController(robot_state, path):
 
     # Extreme sharp turns
     if ML < config.MIN_SPD:
-        ML = 0
-        MR = config.MIN_SPD
+        ML = 30
+        MR = 80
+        # MR = config.MIN_SPD
     elif MR < config.MIN_SPD:
-        ML = config.MIN_SPD
-        MR = 0
+        ML = 80
+        MR = 30
 
     print("ML:", ML)
     print("MR:", MR)

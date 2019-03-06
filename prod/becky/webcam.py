@@ -5,7 +5,7 @@ from config import current_config as config
 class Webcam:
     """Asynchronous threaded version of webcam. Aim to provide higher fps"""
     def __init__(self):
-        self.cam = cv2.VideoCapture(cv2.CAP_DSHOW + 1)
+        self.cam = cv2.VideoCapture(cv2.CAP_DSHOW)
 
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, config.CAM_WIDTH)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, config.CAM_HEIGHT)

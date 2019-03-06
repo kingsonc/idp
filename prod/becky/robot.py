@@ -27,8 +27,9 @@ class RobotState():
             return 0
         else:
             x_center, y_center, radius = circles[0,0]
-            x_center = int(x_center)
-            y_center = int(y_center)
+            # x_center = int(x_center)
+            x_center = int(x_center+(736.5-x_center)/9)
+            y_center = int(y_center+(736.5-y_center)/9)
             coords_cm = vision.map_coord_to_cm((x_center,y_center))
             # print(f"Robot found at ({coords_cm}).")
             self.visible = True
@@ -57,7 +58,7 @@ class RobotState():
         dy = self.tracked_pts[0][1] - self.tracked_pts[5][1]
 
         mag = dx**2 + dy**2
-        if mag < 500:
+        if mag < 300:
             # print("Robot not moving")
             return self.last_orientation
 

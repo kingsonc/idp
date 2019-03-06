@@ -1,3 +1,5 @@
+import time
+
 import cv2
 import numpy as np
 
@@ -19,14 +21,14 @@ if __name__ == '__main__':
     cv2.resizeWindow('Camera', 1200,600)
 
     ### Uncomment one of below to choose between live webcam or recorded video
-    # camera = webcam.Webcam()
-    camera = webcam.VideoClip('../test_files/output1.avi')
+    camera = webcam.Webcam()
+    # camera = webcam.VideoClip('../test_files/output1.avi')
 
     becky = robot.RobotState()
     fctracker = fuelcell.FuelCellsTracker()
     navigation = path_finder.PathFinder()
     navigation.process.start()
-    arduino = comms.ArduinoNC('COM6')
+    arduino = comms.Arduino('COM15')
 
     path = None
     path_override = False
@@ -45,6 +47,7 @@ if __name__ == '__main__':
         table_plot = plotter.board_plot(becky, visible_fuelcells)
 
         if not robot_coords:
+            time.sleep(0.01)
             continue
 
         if becky.state == "INITIAL":
@@ -78,7 +81,7 @@ if __name__ == '__main__':
 
         # Calculate motor speeds based on path
         if path:
-            print(path)
+            # print(path)
             ML, MR, path_pos, target_coords = motor_controller.PIDController(becky, path)
             table_plot = path_finder.plot_path(table_plot,path, path_pos, target_coords)
 
