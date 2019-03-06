@@ -6,6 +6,7 @@ import becky.vision as vision
 
 class RobotState():
     def __init__(self):
+        self.state = "INITIAL"
         self.tracked_pts = deque(maxlen=10)
         self.tracked_pts_cm = deque(maxlen=10)
         self.last_orientation = -math.pi/2      # Starting orientation

@@ -22,14 +22,10 @@ def PIDController(robot_state, path):
     else:
         target_coord = path[-1]
 
-    print(robot_pos)
-    print(path_idx, path[path_idx])
-    print(target_idx, target_coord)
-
     target_dist_sqr = ((target_coord[0]-robot_pos[0])**2
                        + (target_coord[1]-robot_pos[1])**2)
 
-    if target_dist_sqr == 0:
+    if target_dist_sqr < 10:
         print("Already at target")
         return (0, 0, path[path_idx], target_coord)
 
@@ -44,10 +40,6 @@ def PIDController(robot_state, path):
     # Desired curvature
     curv = 2*abs(x_v)/target_dist_sqr
 
-    # robot_vec = [math.cos(orientation), math.sin(orientation), 0]
-    # heading_vec = [dx,dy,0]
-
-    # if np.cross(robot_vec, heading_vec)[2] > 0:
     if x_v > 0:
         print("turn left")
         ML = int(config.MAX_SPD - curv*config.KP)
@@ -57,19 +49,16 @@ def PIDController(robot_state, path):
         ML = config.MAX_SPD
         MR = int(config.MAX_SPD - curv*config.KP)
 
-    if ML < 0:
-        MR += abs(ML)*3
-        ML = 0
-    elif MR < 0:
-        ML += abs(MR)*3
-        MR = 0
+    print("original ML:", ML)
+    print("original MR:", MR)
 
-    elif ML < 100:
-        MR += (100-ML)*3
-        ML = 100
-    elif MR < 100:
-        ML += (100-ML)*3
-        MR = 100
+    # Extreme sharp turns
+    if ML < config.MIN_SPD:
+        ML = 0
+        MR = config.MIN_SPD
+    elif MR < config.MIN_SPD:
+        ML = config.MIN_SPD
+        MR = 0
 
     print("ML:", ML)
     print("MR:", MR)

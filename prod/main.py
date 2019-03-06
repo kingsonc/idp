@@ -9,6 +9,7 @@ import becky.plotter as plotter
 import becky.robot as robot
 import becky.webcam as webcam
 import becky.vision as vision
+from config import current_config as config
 
 if __name__ == '__main__':
     # fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -18,16 +19,17 @@ if __name__ == '__main__':
     cv2.resizeWindow('Camera', 1200,600)
 
     ### Uncomment one of below to choose between live webcam or recorded video
-    camera = webcam.Webcam()
-    # camera = webcam.VideoClip('../test_files/output1.avi')
+    # camera = webcam.Webcam()
+    camera = webcam.VideoClip('../test_files/output1.avi')
 
     becky = robot.RobotState()
     fctracker = fuelcell.FuelCellsTracker()
     navigation = path_finder.PathFinder()
     navigation.process.start()
-    arduino = comms.Arduino('COM6')
+    arduino = comms.ArduinoNC('COM6')
 
     path = None
+    path_override = False
 
     while True:
         timer = cv2.getTickCount()
@@ -42,8 +44,13 @@ if __name__ == '__main__':
         # Generate simulation table
         table_plot = plotter.board_plot(becky, visible_fuelcells)
 
-        if robot_coords:
-            # Passing variables for path finding
+        if not robot_coords:
+            continue
+
+        if becky.state == "INITIAL":
+            path = config.INITIAL_PATH
+            path_override = True
+        else:
             try:
                 # Clear multiprocessing queues
                 navigation.visible_fuelcells_q.get_nowait()
@@ -51,30 +58,33 @@ if __name__ == '__main__':
                 navigation.target_coords_q.get_nowait()
             except:
                 pass
-            finally:
-                try:
-                    # Push new values into queues
-                    navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
-                    navigation.robot_coords_q.put_nowait(robot_coords)
-                    # navigation.target_coords_q.put_nowait((150,50))
-                    navigation.target_coords_q.put_nowait(visible_fuelcells[0].map_coord_cm)
-                    print(visible_fuelcells[0].map_coord_cm)
-                except:
-                    pass
 
-        # Get new path if available
-        try:
-            path = navigation.path_q.get_nowait()
-        except:
-            pass
+            try:
+                # Push new values into queues
+                visible_fuelcells = []
+                navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
+                # navigation.robot_coords_q.put_nowait(robot_coords)
+                navigation.robot_coords_q.put_nowait((60,10))
+                navigation.target_coords_q.put_nowait((200,10))
+            except:
+                pass
+
+        if not path_override:
+            # Get new path if available
+            try:
+                path = navigation.path_q.get_nowait()
+            except:
+                pass
 
         # Calculate motor speeds based on path
         if path:
+            print(path)
             ML, MR, path_pos, target_coords = motor_controller.PIDController(becky, path)
             table_plot = path_finder.plot_path(table_plot,path, path_pos, target_coords)
 
             arduino.motor_L.speed = ML
             arduino.motor_R.speed = MR
+
 
         overall = np.hstack((table_plot,frame))
         cv2.imshow('Camera', overall)
