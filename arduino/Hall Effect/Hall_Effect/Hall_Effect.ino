@@ -1,4 +1,4 @@
-int analogPin = A0;     // Hall effect output voltage connected to A0
+int analogPin = A1;     // Hall effect output voltage connected to A0
 int digitalPin = 7;
 int val = 0;           // variable to store the value read
 
@@ -9,7 +9,7 @@ void setup()
 
 void loop()
 {
-  //val = analogRead(analogPin);     // read the input pin
-  val = digitalRead(digitalPin);    //read digital pin (after schmidt trigger)
+  val = analogRead(analogPin);     // read the input pin
+  //val = digitalRead(digitalPin);    //read digital pin (after schmidt trigger)
   Serial.println(val);             // debug value
 } 

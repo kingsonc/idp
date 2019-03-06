@@ -72,7 +72,7 @@ void stop_motors() {
 //Beam Break Testing Subroutine
 void beam_break() {
   int val = analogRead(photodiode);
-  if (val >= 700) {                                   //set threshold
+  if (val <= 350) {                                   //set threshold
        Serial.println("There is a block in the way!");
        block_in_working_area = true;
   }
@@ -84,8 +84,7 @@ void beam_break() {
 //Hall Effect Testing Subroutine
 void hall_effect() {
   int magnetic = analogRead(hall_effect_pin);
-  int threshold = 350-magnetic;
-    if (abs(threshold) >=50) {                          //set threshold
+    if (magnetic >=350) {                          //set threshold
       is_magnetic = true;
     }
     else {
@@ -96,17 +95,18 @@ void hall_effect() {
 //Accept and reject mechanism
 void servo_accept(){
   slow_movement();
-  myservo.write(60);
+  myservo.write(40);
   Serial.print("ACCEPT");
-  delay(1000); 
-  stop_motors();                        
- 
+  delay(2300); 
+                          
   // sweep out
-  for (int pos = 50; pos<=180; pos+=1){
+  for (int pos = 40; pos<=180; pos+=1){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(10);
+    delay(5);
   } 
-
+  myservo.write(180);
+  stop_motors();
+  delay(2000);
   //reset servo
   myservo.write(85);
 }
@@ -170,6 +170,7 @@ void setup() {
 }
 
 void loop() {
+  if (Serial.available() > 0) {
     //set new motor speed
     String rc = Serial.readStringUntil(end_delimiter);
     int delimiterIdx = rc.indexOf(delimiter);
@@ -191,14 +192,13 @@ void loop() {
         tipper_landing();
         servo_accept();
         tipper_liftoff();}                       //accept block, send serial
+    else if (is_magnetic == true) {
+      servo_reject();}                         //reject block, send serial
 
-      else if (is_magnetic == true) {
-        servo_reject();}                         //reject block, send serial
+    //reset
+    is_magnetic = false;         
+    block_in_working_area = false;  
+  }
 
-      //reset
-      is_magnetic = false;         
-      block_in_working_area = false;  
-    }
-
-    //listen for tipping command
-  }  
+  //listen for tipping command
+}
