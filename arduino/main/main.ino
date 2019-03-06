@@ -84,8 +84,7 @@ void beam_break() {
 //Hall Effect Testing Subroutine
 void hall_effect() {
   int magnetic = analogRead(hall_effect_pin);
-  int threshold = 350-magnetic;
-    if (abs(threshold) >=50) {                          //set threshold
+    if (magnetic >=350) {                          //set threshold
       is_magnetic = true;
     }
     else {
@@ -166,6 +165,11 @@ void loop() {
       delimiterIdx = rc.indexOf(delimiter);
     }
     Serial.println('A');
+
+    Serial.println("Block in working area");
+    Serial.println(block_in_working_area);
+    Serial.println("is magnetic");
+    Serial.println(is_magnetic);
     
     //test beam break and hall effect
     beam_break();
