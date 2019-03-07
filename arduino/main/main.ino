@@ -31,43 +31,43 @@ void decoder(String cmd) {
     if (cmd.charAt(1) == 'T') {
       int duration = cmd.substring(3,7).toInt();
       if (cmd.charAt(2) == 'L') {
-        Motor_L->setSpeed(100);
-        Motor_R->setSpeed(100);
+        Motor_L->setSpeed(80);
+        Motor_R->setSpeed(80);
         Motor_L->run(BACKWARD);
         Motor_R->run(FORWARD);
       } else if (cmd.charAt(2) == 'R') {
-        Motor_L->setSpeed(100);
-        Motor_R->setSpeed(100);
+        Motor_L->setSpeed(80);
+        Motor_R->setSpeed(80);
         Motor_L->run(FORWARD);
         Motor_R->run(BACKWARD);     
       }
       delay(duration);
-      stop_motors();
-      return;
-    }
-    
-    int spd = cmd.substring(3,6).toInt(); //slice bits 3-6 from serial (speed)
-     
-     //set motor speeds using commands received from serial
-     if (cmd.charAt(1) == 'L') {
-      Motor_L->setSpeed(spd);
+      Serial.println("TC");
+      slow_movement();
+    } else {
+      int spd = cmd.substring(3,6).toInt(); //slice bits 3-6 from serial (speed)
       
-      //check direction
-      if (cmd.charAt(2) == 'F') {
-        Motor_L->run(FORWARD);}  
-      else if (cmd.charAt(2) == 'R'){
-        Motor_L->run(BACKWARD);}       
+      //set motor speeds using commands received from serial
+      if (cmd.charAt(1) == 'L') {
+        Motor_L->setSpeed(spd);
+      
+        //check direction
+        if (cmd.charAt(2) == 'F') {
+          Motor_L->run(FORWARD);
+        } else if (cmd.charAt(2) == 'R') {
+          Motor_L->run(BACKWARD);
+        }       
+      } else if (cmd.charAt(1) == 'R' ){
+        Motor_R->setSpeed(spd);
+      
+        //check direction
+        if (cmd.charAt(2) == 'F') {
+          Motor_R->run(FORWARD);
+        } else if (cmd.charAt(2) == 'R') {
+          Motor_R->run(BACKWARD);
+        }  
       }
-      
-     else if (cmd.charAt(1) == 'R'){
-      Motor_R->setSpeed(spd);
-      
-      //check direction
-      if (cmd.charAt(2) == 'F') {
-        Motor_R->run(FORWARD);}  
-      else if (cmd.charAt(2) == 'R'){
-        Motor_R->run(BACKWARD);}  
-      }      
+    }
   }
 }
 
@@ -113,7 +113,7 @@ bool hall_effect() {
 void servo_accept(){
   slow_movement();
   myservo.write(40);
-  Serial.print("ACCEPT");
+  //Serial.print("ACCEPT");
   delay(2000); 
                           
   // sweep out
@@ -132,17 +132,9 @@ void servo_reject() {
   //reset servo
   myservo.write(85);
   slow_movement();
-  Serial.print("REJECT");
+  //Serial.print("REJECT");
   delay(3000);
-  stop_motors();
-}               
-  /*// sweep out
-  for (int pos = 100; pos>=0; pos-=1){
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(10);
-  } 
 }
-*/
 
 //tipper mechanism
 void tip() {
@@ -160,14 +152,15 @@ void tip() {
 void tipper_liftoff() {
   Motor_Tip->setSpeed(255);
   Motor_Tip->run(FORWARD);
-  delay(200);
+  delay(300);
   Motor_Tip->setSpeed(50);
 }
 
 void tipper_landing() {
   Motor_Tip->run(BACKWARD);
-  delay(250);
+  delay(100);
   Motor_Tip->run(RELEASE);
+  delay(300);
 }
 
 //Setup and Loop
@@ -182,6 +175,7 @@ void setup() {
   //Initialise Motors
   AFMS.begin();
   stop_motors();
+  tipper_landing();
   tipper_liftoff();
   Serial.begin(9600);                           //initialise serial
   Serial.setTimeout(500);
@@ -202,13 +196,12 @@ void loop() {
     Serial.println('A');
   }
 
-  Serial.println(analogRead(A1));
   //test beam break and hall effect
   beam_break();
   
   if (block_in_working_area == true) {
     slow_movement();
-    for (int i=0; i<=500; i++){
+    for (int i=0; i<=600; i++){
       bool check = hall_effect();
       if(check==true){
         is_magnetic = true;
@@ -229,7 +222,7 @@ void loop() {
     is_magnetic = false;         
     block_in_working_area = false;  
     slow_movement();
-}
+  }
 
   //listen for tipping command
 }

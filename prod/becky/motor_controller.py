@@ -21,14 +21,14 @@ def PIDController(robot_state, path):
         target_coord = path[target_idx]
     else:
         target_coord = path[-1]
-        return (0, 0, path[path_idx], target_coord)
+        return (0, 0, 0, 0, path[path_idx], target_coord)
 
     target_dist_sqr = ((target_coord[0]-robot_pos[0])**2
                        + (target_coord[1]-robot_pos[1])**2)
 
     if target_dist_sqr < 10:
         print("Already at target")
-        return (0, 0, path[path_idx], target_coord)
+        return (0, 0, 0, 0, path[path_idx], target_coord)
 
     # dx dy in map coordinates
     dx = target_coord[0] - robot_pos[0]
@@ -50,8 +50,8 @@ def PIDController(robot_state, path):
         ML = config.MAX_SPD
         MR = int(config.MAX_SPD - curv*config.KP)
 
-    angle_diff = None
     turn_cmd = None
+    new_orientation = None
     # Extreme sharp turns
     if ML < config.MIN_SPD or MR < config.MIN_SPD:
         angle_diff = math.degrees((math.atan2(y_v,x_v)+(7/2)*math.pi) % (2*math.pi))
@@ -59,18 +59,19 @@ def PIDController(robot_state, path):
             angle_diff = 360-angle_diff
 
         if ML < config.MIN_SPD:
-            turn_duration = angle_diff*20
+            turn_duration = int(angle_diff*43.5)
             turn_cmd = "MTL" + str(turn_duration).zfill(4) + ','
-            angle_diff = -angle_diff
             ML = 0
             MR = 0
         elif MR < config.MIN_SPD:
-            turn_duration = angle_diff*20
+            turn_duration = int(angle_diff*43.5)
             turn_cmd = "MTR" + str(turn_duration).zfill(4) + ','
             ML = 0
             MR = 0
 
+        new_orientation = math.atan2(dy,dx)
+
     print("ML:", ML)
     print("MR:", MR)
 
-    return (ML, MR, turn_cmd, angle_diff, path[path_idx], target_coord)
+    return (ML, MR, turn_cmd, new_orientation, path[path_idx], target_coord)
