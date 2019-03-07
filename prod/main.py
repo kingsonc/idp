@@ -1,3 +1,4 @@
+import math
 import time
 
 import cv2
@@ -21,14 +22,14 @@ if __name__ == '__main__':
     cv2.resizeWindow('Camera', 1200,600)
 
     ### Uncomment one of below to choose between live webcam or recorded video
-    camera = webcam.Webcam()
-    # camera = webcam.VideoClip('../test_files/output1.avi')
+    # camera = webcam.Webcam()
+    camera = webcam.VideoClip('../test_files/output1.avi')
 
     becky = robot.RobotState()
     fctracker = fuelcell.FuelCellsTracker()
     navigation = path_finder.PathFinder()
     navigation.process.start()
-    arduino = comms.Arduino('COM15')
+    arduino = comms.ArduinoNC('COM15')
 
     path = None
     path_override = False
@@ -82,11 +83,16 @@ if __name__ == '__main__':
         # Calculate motor speeds based on path
         if path:
             # print(path)
-            ML, MR, path_pos, target_coords = motor_controller.PIDController(becky, path)
+            ML, MR, turn_cmd, angle_diff, path_pos, target_coords = motor_controller.PIDController(becky, path)
             table_plot = path_finder.plot_path(table_plot,path, path_pos, target_coords)
 
-            arduino.motor_L.speed = ML
-            arduino.motor_R.speed = MR
+            if turn_cmd:
+                arduino.turn_cmd = turn_cmd
+                becky.last_orientation += math.radians(angle_diff)
+                print("Sharp turn: ", angle_diff)
+            else:
+                arduino.motor_L.speed = ML
+                arduino.motor_R.speed = MR
 
 
         overall = np.hstack((table_plot,frame))
