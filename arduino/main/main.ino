@@ -1,3 +1,4 @@
+#include <Ticker.h>
 #include <Wire.h>
 #include <Servo.h>
 #include <Adafruit_MotorShield.h>
@@ -11,8 +12,17 @@ Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
 int spd = 0;
 
 //define switch and LED pins
-int SWITCH = 1;
-int MOV_LED = 0;
+int SWITCH = 3;
+int MOV_LED = 6;
+int STATE = LOW;
+
+void led_blinky(){
+  STATE = digitalRead(MOV_LED);
+  STATE = !STATE;
+  digitalWrite(MOV_LED, STATE);
+}
+
+Ticker movement_LED(led_blinky, 1000);
 
 //Create Servo Object
 Servo myservo;
@@ -78,10 +88,18 @@ void decoder(String cmd) {
 
 //define slow movement forwards
 void slow_movement() {
-    Motor_L->setSpeed(50);
-    Motor_R->setSpeed(50);
+    Motor_L->setSpeed(40);
+    Motor_R->setSpeed(40);
     Motor_L->run(FORWARD);
     Motor_R->run(FORWARD);
+}
+
+//define slow reverse
+void slow_pre_saturation() {
+    Motor_L->setSpeed(50);
+    Motor_R->setSpeed(50);
+    Motor_L->run(BACKWARD);
+    Motor_R->run(BACKWARD);
 }
 
 //define motor stop
@@ -107,7 +125,7 @@ void beam_break() {
 //Hall Effect Testing Subroutine
 bool hall_effect() {
   int magnetic = analogRead(hall_effect_pin);
-    if (magnetic >=350) {                          //set threshold
+    if (magnetic >=300) {                          //set threshold
       return true;
     } else {
       return false;
@@ -152,6 +170,7 @@ void tip() {
   Motor_Tip->setSpeed(200);
   delay(500);
   Motor_Tip->run(RELEASE);
+  Serial.println("tipping");
 }
 
 void tipper_liftoff() {
@@ -168,16 +187,13 @@ void tipper_landing() {
   delay(300);
 }
 
-void button_pushed(){
-  tip();
-}
-
 //Setup and Loop
 void setup() {
   //initialise pin inputs
   pinMode(photodiode,INPUT); 
   pinMode(MOV_LED,OUTPUT);
-  pinMode(SWITCH, INPUT); 
+  pinMode(SWITCH, INPUT);
+  attachInterrupt(digitalPinToInterrupt(SWITCH), tip, RISING); 
   
   //initialise servo object and set to neutral
   myservo.attach(servo_pin);
@@ -191,6 +207,8 @@ void setup() {
   Serial.begin(9600);                           //initialise serial
   Serial.setTimeout(500);
   Serial.write("READY");
+
+  movement_LED.start(); //it will start the ticker
 }
 
 void loop() {
@@ -212,9 +230,13 @@ void loop() {
 
   //if moving, set LED high
   if(spd != 0){
-    digitalWrite(MOV_LED, HIGH);
+      movement_LED.update(); //resume the ticker.
   }
-  
+  if (spd == 0){
+      digitalWrite(MOV_LED, LOW);
+  }
+
+  //test block in working area
   if (block_in_working_area == true) {
     slow_movement();
     for (int i=0; i<=600; i++){
@@ -239,7 +261,4 @@ void loop() {
     block_in_working_area = false;  
     slow_movement();
   }
-
-  //set LED low again
-   digitalWrite(MOV_LED, LOW);
 }

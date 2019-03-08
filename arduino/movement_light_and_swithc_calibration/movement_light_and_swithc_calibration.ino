@@ -1,17 +1,17 @@
-int ledPin = 3; // choose the pin for the LED
-int inPin = 7;   // choose the input pin (for a pushbutton)
-int val = 0;     // variable for reading the pin status
+const byte ledPin = 6;
+const byte interruptPin = 3;
+volatile byte a = LOW;
 
 void setup() {
-  pinMode(ledPin, OUTPUT);  // declare LED as output
-  pinMode(inPin, INPUT);    // declare pushbutton as input
+  pinMode(ledPin, OUTPUT);
+  pinMode(interruptPin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), b, RISING);
 }
 
-void loop(){
-  val = digitalRead(inPin);  // read input value
-  if (val == HIGH) {         // check if the input is HIGH (button released)
-    digitalWrite(ledPin, LOW);  // turn LED OFF
-  } else {
-    digitalWrite(ledPin, HIGH);  // turn LED ON
-  }
+void loop() {
+  digitalWrite(ledPin, a);
+}
+
+void b() {
+  a = !a;
 }
