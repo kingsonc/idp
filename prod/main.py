@@ -57,11 +57,11 @@ if __name__ == '__main__':
             path_override = True
         elif becky.state == "REVERSE":
             if not reversing:
-                reverse = True
+                reversing = True
                 arduino.start_reverse()
                 becky.tracked_pts.clear()
                 becky.tracked_pts_cm.clear()
-                becky.last_orientation = -becky.last_orientation
+                becky.last_orientation += math.pi
                 path = config.REVERSE_PATH
                 path_override = True
         # else:
@@ -102,6 +102,8 @@ if __name__ == '__main__':
                     becky.state = "GO_TO_MIDDLE"
                 elif becky.state == "GO_TO_MIDDLE":
                     becky.state = "REVERSE"
+                    arduino.turn_cmd = "MTL7800,"
+                    new_orientation = math.pi/2
                 elif becky.state == "REVERSE":
                     pass
 

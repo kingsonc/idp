@@ -10,7 +10,7 @@ Adafruit_DCMotor *Motor_R = AFMS.getMotor(1);
 Adafruit_DCMotor *Motor_L = AFMS.getMotor(2);
 Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
 int spd = 0;
-bool tipped_already = false
+bool tipped_already = false;
 
 //define switch and LED pins
 int SWITCH = 3;
@@ -263,10 +263,8 @@ void loop() {
 //    slow_movement();
 //  }
 
-  if (digitalRead(SWITCH) == HIGH) {
-    if (tipped_already == false) {
-      tip();
-      tipped_already == true;
-    }
+  if (digitalRead(SWITCH) == HIGH && tipped_already == false) {
+    tip();
+    tipped_already = true;
   }
 }
