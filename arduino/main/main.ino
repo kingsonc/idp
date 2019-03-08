@@ -28,35 +28,53 @@ char end_delimiter = '.';
 //Print new serial data
 void decoder(String cmd) {
   if (cmd.charAt(0) == 'M') {
-    int spd = cmd.substring(3,6).toInt(); //slice bits 3-6 from serial (speed)
-     
-     //set motor speeds using commands received from serial
-     if (cmd.charAt(1) == 'L') {
-      Motor_L->setSpeed(spd);
-      
-      //check direction
-      if (cmd.charAt(2) == 'F') {
-        Motor_L->run(FORWARD);}  
-      else if (cmd.charAt(2) == 'R'){
-        Motor_L->run(BACKWARD);}       
+    if (cmd.charAt(1) == 'T') {
+      int duration = cmd.substring(3,7).toInt();
+      if (cmd.charAt(2) == 'L') {
+        Motor_L->setSpeed(80);
+        Motor_R->setSpeed(80);
+        Motor_L->run(BACKWARD);
+        Motor_R->run(FORWARD);
+      } else if (cmd.charAt(2) == 'R') {
+        Motor_L->setSpeed(80);
+        Motor_R->setSpeed(80);
+        Motor_L->run(FORWARD);
+        Motor_R->run(BACKWARD);     
       }
+      delay(duration);
+      Serial.println("TC");
+      slow_movement();
+    } else {
+      int spd = cmd.substring(3,6).toInt(); //slice bits 3-6 from serial (speed)
       
-     else if (cmd.charAt(1) == 'R'){
-      Motor_R->setSpeed(spd);
+      //set motor speeds using commands received from serial
+      if (cmd.charAt(1) == 'L') {
+        Motor_L->setSpeed(spd);
       
-      //check direction
-      if (cmd.charAt(2) == 'F') {
-        Motor_R->run(FORWARD);}  
-      else if (cmd.charAt(2) == 'R'){
-        Motor_R->run(BACKWARD);}  
-      }      
+        //check direction
+        if (cmd.charAt(2) == 'F') {
+          Motor_L->run(FORWARD);
+        } else if (cmd.charAt(2) == 'R') {
+          Motor_L->run(BACKWARD);
+        }       
+      } else if (cmd.charAt(1) == 'R' ){
+        Motor_R->setSpeed(spd);
+      
+        //check direction
+        if (cmd.charAt(2) == 'F') {
+          Motor_R->run(FORWARD);
+        } else if (cmd.charAt(2) == 'R') {
+          Motor_R->run(BACKWARD);
+        }  
+      }
+    }
   }
 }
 
 //define slow movement forwards
 void slow_movement() {
-    Motor_L->setSpeed(75);
-    Motor_R->setSpeed(75);
+    Motor_L->setSpeed(50);
+    Motor_R->setSpeed(50);
     Motor_L->run(FORWARD);
     Motor_R->run(FORWARD);
 }
@@ -72,8 +90,8 @@ void stop_motors() {
 //Beam Break Testing Subroutine
 void beam_break() {
   int val = analogRead(photodiode);
-  if (val <= 350) {                                   //set threshold
-       Serial.println("There is a block in the way!");
+  if (val >= 415) {                                   //set threshold
+//       Serial.println("There is a block in the way!");
        block_in_working_area = true;
   }
   else {
@@ -82,13 +100,12 @@ void beam_break() {
 }
 
 //Hall Effect Testing Subroutine
-void hall_effect() {
+bool hall_effect() {
   int magnetic = analogRead(hall_effect_pin);
     if (magnetic >=350) {                          //set threshold
-      is_magnetic = true;
-    }
-    else {
-      is_magnetic = false;
+      return true;
+    } else {
+      return false;
     }
 }
 
@@ -96,8 +113,8 @@ void hall_effect() {
 void servo_accept(){
   slow_movement();
   myservo.write(40);
-  Serial.print("ACCEPT");
-  delay(2300); 
+  //Serial.print("ACCEPT");
+  delay(2000); 
                           
   // sweep out
   for (int pos = 40; pos<=180; pos+=1){
@@ -115,15 +132,9 @@ void servo_reject() {
   //reset servo
   myservo.write(85);
   slow_movement();
-  Serial.print("REJECT");
-}               
-  /*// sweep out
-  for (int pos = 100; pos>=0; pos-=1){
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(10);
-  } 
+  //Serial.print("REJECT");
+  delay(3000);
 }
-*/
 
 //tipper mechanism
 void tip() {
@@ -141,14 +152,15 @@ void tip() {
 void tipper_liftoff() {
   Motor_Tip->setSpeed(255);
   Motor_Tip->run(FORWARD);
-  delay(200);
+  delay(300);
   Motor_Tip->setSpeed(50);
 }
 
 void tipper_landing() {
   Motor_Tip->run(BACKWARD);
-  delay(250);
+  delay(100);
   Motor_Tip->run(RELEASE);
+  delay(300);
 }
 
 //Setup and Loop
@@ -163,6 +175,7 @@ void setup() {
   //Initialise Motors
   AFMS.begin();
   stop_motors();
+  tipper_landing();
   tipper_liftoff();
   Serial.begin(9600);                           //initialise serial
   Serial.setTimeout(500);
@@ -181,23 +194,34 @@ void loop() {
       delimiterIdx = rc.indexOf(delimiter);
     }
     Serial.println('A');
-    
-    //test beam break and hall effect
-//    beam_break();
-    
-    if (block_in_working_area == true) {
-      hall_effect();                            //test hall effect
-      
-      if(is_magnetic==false) {
-        tipper_landing();
-        servo_accept();
-        tipper_liftoff();}                       //accept block, send serial
-    else if (is_magnetic == true) {
-      servo_reject();}                         //reject block, send serial
+  }
+
+  //test beam break and hall effect
+  beam_break();
+  
+  if (block_in_working_area == true) {
+    slow_movement();
+    for (int i=0; i<=600; i++){
+      bool check = hall_effect();
+      if(check==true){
+        is_magnetic = true;
+        break;
+      }
+      delay(1);
+    }
+
+    if(is_magnetic==false) {
+      tipper_landing();
+      servo_accept();
+      tipper_liftoff();   //accept block, send serial
+    } else if (is_magnetic == true) {
+      servo_reject();     //reject block, send serial
+    }
 
     //reset
     is_magnetic = false;         
     block_in_working_area = false;  
+    slow_movement();
   }
 
   //listen for tipping command

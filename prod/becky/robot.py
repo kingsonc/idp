@@ -10,6 +10,7 @@ class RobotState():
         self.tracked_pts = deque(maxlen=10)
         self.tracked_pts_cm = deque(maxlen=10)
         self.last_orientation = -math.pi/2      # Starting orientation
+        self.turning = False
         self.visible = False
 
     def find_robot(self, frame):
@@ -51,6 +52,9 @@ class RobotState():
             return (0,0)
 
     def orientation(self):
+        if self.turning:
+            return self.last_orientation
+
         if len(self.tracked_pts) <= 5:
             return self.last_orientation
 
@@ -58,10 +62,14 @@ class RobotState():
         dy = self.tracked_pts[0][1] - self.tracked_pts[5][1]
 
         mag = dx**2 + dy**2
-        if mag < 300:
+        if mag < 250:
             # print("Robot not moving")
             return self.last_orientation
 
         orientation = math.atan2(dy,dx)
         self.last_orientation = orientation
         return orientation
+
+    def turn(self, new_orientation):
+        self.last_orientation = new_orientation
+        self.turning = True

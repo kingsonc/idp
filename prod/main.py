@@ -1,3 +1,4 @@
+import math
 import time
 
 import cv2
@@ -47,11 +48,12 @@ if __name__ == '__main__':
         table_plot = plotter.board_plot(becky, visible_fuelcells)
 
         if not robot_coords:
-            time.sleep(0.01)
+            time.sleep(1)
             continue
 
         if becky.state == "INITIAL":
             path = config.INITIAL_PATH
+            # path = config.TEST_PATH
             path_override = True
         else:
             try:
@@ -82,11 +84,23 @@ if __name__ == '__main__':
         # Calculate motor speeds based on path
         if path:
             # print(path)
-            ML, MR, path_pos, target_coords = motor_controller.PIDController(becky, path)
+            ML, MR, turn_cmd, new_orientation, path_pos, target_coords = motor_controller.PIDController(becky, path)
             table_plot = path_finder.plot_path(table_plot,path, path_pos, target_coords)
 
-            arduino.motor_L.speed = ML
-            arduino.motor_R.speed = MR
+            if not arduino.turning and becky.turning:
+                becky.turning = False
+                becky.tracked_pts.clear()
+                becky.tracked_pts_cm.clear()
+
+            if turn_cmd and not arduino.turning:
+                arduino.turning = True
+                arduino.turn_cmd = turn_cmd
+                becky.turn(new_orientation)
+                print("Sharp turn")
+                turn_cmd = None
+            else:
+                arduino.motor_L.speed = ML
+                arduino.motor_R.speed = MR
 
 
         overall = np.hstack((table_plot,frame))

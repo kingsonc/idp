@@ -15,6 +15,8 @@ class Arduino:
 
         self.wait_send = False
         self.wait_rcv = False
+        self.turn_cmd = None
+        self.turning = False
 
         self.running = True
         self.thread = threading.Thread(target=self.update, daemon=True)
@@ -27,6 +29,8 @@ class Arduino:
                 if self.ser.in_waiting >0:
                     line = self.ser.read_until('\r\n')
                     print("Data: " + str(line))
+                    if 'TC' in str(line):
+                        self.turning = False
                     self.wait_rcv = False
             else:
                 send_cmds = self.generate_cmds()
@@ -35,23 +39,24 @@ class Arduino:
                     print("Sending: " + str(send_cmds.encode()))
                     self.ser.write(send_cmds.encode())
                     self.wait_rcv = True
-                    self.wait_send = False
                 else:
                     time.sleep(0.01)
 
     def generate_cmds(self):
-        cmds = ""
-        if self.motor_L.updated:
-            cmds += (self.motor_L.precmd + self.motor_L.direction
-                     + str(self.motor_L.speed).zfill(3) + ',')
-            self.motor_L.updated = False
-            self.wait_send = True
+        if not self.turn_cmd:
+            cmds = ""
+            if self.motor_L.updated:
+                cmds += (self.motor_L.precmd + self.motor_L.direction
+                         + str(self.motor_L.speed).zfill(3) + ',')
+                self.motor_L.updated = False
 
-        if self.motor_R.updated:
-            cmds += (self.motor_R.precmd + self.motor_R.direction
-                     + str(self.motor_R.speed).zfill(3) + ',')
-            self.motor_R.updated = False
-            self.wait_send = True
+            if self.motor_R.updated:
+                cmds += (self.motor_R.precmd + self.motor_R.direction
+                         + str(self.motor_R.speed).zfill(3) + ',')
+                self.motor_R.updated = False
+        else:
+            cmds = self.turn_cmd
+            self.turn_cmd = None
 
         return cmds
 
@@ -68,6 +73,7 @@ class ArduinoNC:
 
         self.wait_send = False
         self.wait_rcv = False
+        self.turn_cmd = None
 
         self.running = True
         self.thread = threading.Thread(target=self.update, daemon=True)
@@ -89,18 +95,20 @@ class ArduinoNC:
             time.sleep(0.01)
 
     def generate_cmds(self):
-        cmds = ""
-        if self.motor_L.updated:
-            cmds += (self.motor_L.precmd + self.motor_L.direction
-                     + str(self.motor_L.speed).zfill(3) + ',')
-            self.motor_L.updated = False
-            self.wait_send = True
+        if not self.turn_cmd:
+            cmds = ""
+            if self.motor_L.updated:
+                cmds += (self.motor_L.precmd + self.motor_L.direction
+                         + str(self.motor_L.speed).zfill(3) + ',')
+                self.motor_L.updated = False
 
-        if self.motor_R.updated:
-            cmds += (self.motor_R.precmd + self.motor_R.direction
-                     + str(self.motor_R.speed).zfill(3) + ',')
-            self.motor_R.updated = False
-            self.wait_send = True
+            if self.motor_R.updated:
+                cmds += (self.motor_R.precmd + self.motor_R.direction
+                         + str(self.motor_R.speed).zfill(3) + ',')
+                self.motor_R.updated = False
+        else:
+            cmds = self.turn_cmd
+            self.turn_cmd = None
 
         return cmds
 

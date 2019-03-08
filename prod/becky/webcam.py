@@ -1,3 +1,4 @@
+import time
 import threading
 import cv2
 from config import current_config as config
@@ -22,6 +23,7 @@ class Webcam:
 
     def update(self):
         while self.running:
+            time.sleep(0.01)
             ok, frame = self.cam.read()
             if not ok:
                 raise Exception('Webcam feed broken')
