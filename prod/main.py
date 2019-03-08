@@ -33,6 +33,7 @@ if __name__ == '__main__':
 
     path = None
     path_override = False
+    reversing = False
 
     while True:
         timer = cv2.getTickCount()
@@ -47,32 +48,40 @@ if __name__ == '__main__':
         # Generate simulation table
         table_plot = plotter.board_plot(becky, visible_fuelcells)
 
-        if not robot_coords:
-            time.sleep(1)
-            continue
-
         if becky.state == "INITIAL":
             path = config.INITIAL_PATH
             # path = config.TEST_PATH
             path_override = True
-        else:
-            try:
-                # Clear multiprocessing queues
-                navigation.visible_fuelcells_q.get_nowait()
-                navigation.robot_coords_q.get_nowait()
-                navigation.target_coords_q.get_nowait()
-            except:
-                pass
+        elif becky.state == "GO_TO_MIDDLE":
+            path = config.GO_MIDDLE_PATH
+            path_override = True
+        elif becky.state == "REVERSE":
+            if not reversing:
+                reverse = True
+                arduino.start_reverse()
+                becky.tracked_pts.clear()
+                becky.tracked_pts_cm.clear()
+                becky.last_orientation = -becky.last_orientation
+                path = config.REVERSE_PATH
+                path_override = True
+        # else:
+        #     try:
+        #         # Clear multiprocessing queues
+        #         navigation.visible_fuelcells_q.get_nowait()
+        #         navigation.robot_coords_q.get_nowait()
+        #         navigation.target_coords_q.get_nowait()
+        #     except:
+        #         pass
 
-            try:
-                # Push new values into queues
-                visible_fuelcells = []
-                navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
-                # navigation.robot_coords_q.put_nowait(robot_coords)
-                navigation.robot_coords_q.put_nowait((60,10))
-                navigation.target_coords_q.put_nowait((200,10))
-            except:
-                pass
+        #     try:
+        #         # Push new values into queues
+        #         visible_fuelcells = []
+        #         navigation.visible_fuelcells_q.put_nowait(visible_fuelcells)
+        #         # navigation.robot_coords_q.put_nowait(robot_coords)
+        #         navigation.robot_coords_q.put_nowait((60,10))
+        #         navigation.target_coords_q.put_nowait((200,10))
+        #     except:
+        #         pass
 
         if not path_override:
             # Get new path if available
@@ -82,10 +91,22 @@ if __name__ == '__main__':
                 pass
 
         # Calculate motor speeds based on path
-        if path:
+        if path and robot_coords:
             # print(path)
-            ML, MR, turn_cmd, new_orientation, path_pos, target_coords = motor_controller.PIDController(becky, path)
+            ML, MR, turn_cmd, new_orientation, path_pos, target_coords, at_target = motor_controller.PIDController(becky, path)
             table_plot = path_finder.plot_path(table_plot,path, path_pos, target_coords)
+
+            if at_target:
+                at_target = False
+                if becky.state == "INITIAL":
+                    becky.state = "GO_TO_MIDDLE"
+                elif becky.state == "GO_TO_MIDDLE":
+                    becky.state = "REVERSE"
+                elif becky.state == "REVERSE":
+                    pass
+
+            if reversing:
+                ML, MR = MR, ML
 
             if not arduino.turning and becky.turning:
                 becky.turning = False
@@ -101,7 +122,6 @@ if __name__ == '__main__':
             else:
                 arduino.motor_L.speed = ML
                 arduino.motor_R.speed = MR
-
 
         overall = np.hstack((table_plot,frame))
         cv2.imshow('Camera', overall)

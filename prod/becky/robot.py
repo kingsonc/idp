@@ -62,7 +62,7 @@ class RobotState():
         dy = self.tracked_pts[0][1] - self.tracked_pts[5][1]
 
         mag = dx**2 + dy**2
-        if mag < 250:
+        if mag < 200:
             # print("Robot not moving")
             return self.last_orientation
 

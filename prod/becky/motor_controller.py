@@ -21,14 +21,14 @@ def PIDController(robot_state, path):
         target_coord = path[target_idx]
     else:
         target_coord = path[-1]
-        return (0, 0, 0, 0, path[path_idx], target_coord)
+        return (0, 0, 0, 0, path[path_idx], target_coord, 1)
 
     target_dist_sqr = ((target_coord[0]-robot_pos[0])**2
                        + (target_coord[1]-robot_pos[1])**2)
 
     if target_dist_sqr < 10:
         print("Already at target")
-        return (0, 0, 0, 0, path[path_idx], target_coord)
+        return (0, 0, 0, 0, path[path_idx], target_coord, 1)
 
     # dx dy in map coordinates
     dx = target_coord[0] - robot_pos[0]
@@ -74,4 +74,4 @@ def PIDController(robot_state, path):
     print("ML:", ML)
     print("MR:", MR)
 
-    return (ML, MR, turn_cmd, new_orientation, path[path_idx], target_coord)
+    return (ML, MR, turn_cmd, new_orientation, path[path_idx], target_coord, 0)

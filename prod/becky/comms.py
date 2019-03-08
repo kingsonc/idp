@@ -60,6 +60,14 @@ class Arduino:
 
         return cmds
 
+    def start_reverse(self):
+        self.motor_L.direction = "R"
+        self.motor_R.direction = "R"
+
+    def stop_reverse(self):
+        self.motor_L.direction = "F"
+        self.motor_R.direction = "F"
+
     def release(self):
         self.ser.close()
         self.thread.join()
