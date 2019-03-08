@@ -8,6 +8,11 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *Motor_R = AFMS.getMotor(1);
 Adafruit_DCMotor *Motor_L = AFMS.getMotor(2);
 Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
+int spd = 0;
+
+//define switch and LED pins
+int SWITCH = 1;
+int MOV_LED = 0;
 
 //Create Servo Object
 Servo myservo;
@@ -45,7 +50,7 @@ void decoder(String cmd) {
       Serial.println("TC");
       slow_movement();
     } else {
-      int spd = cmd.substring(3,6).toInt(); //slice bits 3-6 from serial (speed)
+        spd = cmd.substring(3,6).toInt(); //slice bits 3-6 from serial (speed)
       
       //set motor speeds using commands received from serial
       if (cmd.charAt(1) == 'L') {
@@ -163,10 +168,16 @@ void tipper_landing() {
   delay(300);
 }
 
+void button_pushed(){
+  tip();
+}
+
 //Setup and Loop
 void setup() {
-  //initialise photodiode pin input
+  //initialise pin inputs
   pinMode(photodiode,INPUT); 
+  pinMode(MOV_LED,OUTPUT);
+  pinMode(SWITCH, INPUT); 
   
   //initialise servo object and set to neutral
   myservo.attach(servo_pin);
@@ -198,6 +209,11 @@ void loop() {
 
   //test beam break and hall effect
   beam_break();
+
+  //if moving, set LED high
+  if(spd != 0){
+    digitalWrite(MOV_LED, HIGH);
+  }
   
   if (block_in_working_area == true) {
     slow_movement();
@@ -224,5 +240,6 @@ void loop() {
     slow_movement();
   }
 
-  //listen for tipping command
+  //set LED low again
+   digitalWrite(MOV_LED, LOW);
 }
