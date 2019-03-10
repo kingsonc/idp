@@ -13,7 +13,7 @@ import cv2
 # Better list with max length
 tracked_pts = deque(maxlen=100)
 
-USE_LIVE_CAM = True
+USE_LIVE_CAM = False
 
 if USE_LIVE_CAM:
     cap = cv2.VideoCapture(cv2.CAP_DSHOW + 1)
@@ -24,14 +24,14 @@ if USE_LIVE_CAM:
     cap.set(cv2.CAP_PROP_SATURATION, 70)
 else:
     # Open sample video
-    cap = cv2.VideoCapture('test_files/table3_sample.wmv')
+    cap = cv2.VideoCapture('test_files/output5.avi')
 
 cv2.namedWindow('Tracking', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('Tracking', 1200,600)
 
 # Create output video
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out = cv2.VideoWriter('output4.avi',fourcc, 20.0, (1473,1473))
+# fourcc = cv2.VideoWriter_fourcc(*'XVID')
+# out = cv2.VideoWriter('output4.avi',fourcc, 20.0, (1473,1473))
 
 # GREEN TAPE
 lower_thresh = np.array([60, 100, 40])
@@ -71,7 +71,7 @@ masked = cv2.bitwise_and(frame, frame, mask=mask)
 gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
 
 # Find circle in gray masked frame
-circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 5, param1=50,param2=10,minRadius=0, maxRadius=60)
+circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 5, param1=50,param2=10,minRadius=20, maxRadius=60)
 print(circles)
 
 x_center, y_center, radius = circles[0,0]
@@ -130,11 +130,24 @@ while True:
     cv2.putText(frame, "FPS: " + str(int(fps)), (100,50), \
                 cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50,170,50), 2);
 
-    cv2.imshow("Tracking", frame)
-    out.write(frame)
+
+    # gray = cv2.cvtColor(masked, cv2.COLOR_BGR2GRAY)
+    # circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 5, param1=50,param2=10,minRadius=20, maxRadius=60)
+    # x_center, y_center, radius = circles[0,0]
+    # bbox = (x_center-(radius+20), y_center-(radius+20), 2*(radius+20), 2*(radius+20))
+    # p1 = (int(bbox[0]), int(bbox[1]))
+    # p2 = (int(bbox[0] + bbox[2]), int(bbox[1]+  bbox[3]))
+    # cv2.rectangle(masked, p1, p2, (0,0,255), 2, 1)
+
+    overall = np.hstack((masked,frame))
+
+    cv2.imshow("Tracking", overall)
+    # cv2.imshow("Tracking", frame)
+    # out.write(frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+# out.release()
 cap.release()
 cv2.destroyAllWindows()
