@@ -45,6 +45,8 @@ cv2.rectangle(table, (853,0), (865,123), (255,255,255), -1)
 cv2.rectangle(table, (976,0), (988,123), (255,255,255), -1)
 
 def board_plot(robotState, fuelcells):
+    """ Generates graphical simulation of current table state
+    """
     current_table = table.copy()
 
     if robotState.visible == True:

@@ -11,8 +11,6 @@ def cam2map_transform(frame):
     Returns:
         frame: transformed table-accurate frame in BGR
     """
-    camera_coords = config.CAMERA_COORDS
-    map_cords = config.MAP_COORDS
 
     # Trim frame (remove non-table area) -> Pad frame (simulate missing table
     # area) -> Perspective transform
@@ -20,7 +18,7 @@ def cam2map_transform(frame):
     frame = cv2.copyMakeBorder(frame, config.TABLE_BORDER_FILL_RIGHT,
                                config.TABLE_BORDER_FILL_LEFT, 0, 0,
                                cv2.BORDER_CONSTANT, value=[0,0,0])
-    M = cv2.getPerspectiveTransform(camera_coords,map_cords)
+    M = cv2.getPerspectiveTransform(config.CAMERA_COORDS, config.MAP_COORDS)
     frame = cv2.warpPerspective(frame, M, config.FRAME_POST_PROCESS_SHAPE)
 
     # Rotate image clockwise 90 deg
@@ -44,6 +42,8 @@ def find_fuel_cells(frame):
     fuelcell_coords = []
     kernel = np.ones((7,7),np.uint8)
 
+    # Colour thresholding -> Covert to grayscale -> Morphological opening ->
+    # -> Find contours
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, config.BLUE_LOWER_THRESH, config.BLUE_UPPER_THRESH)
     masked = cv2.bitwise_and(frame, frame, mask=mask)
@@ -56,6 +56,7 @@ def find_fuel_cells(frame):
         cnts = sorted(cnts, key=lambda x: cv2.contourArea(x), reverse=True)[:10]
 
     for cnt in cnts:
+        # Calculate center of contours
         M = cv2.moments(cnt)
         # Add 1e-5 to avoid division by zero
         cx = int(M['m10']/(M['m00'] + 1e-5))
