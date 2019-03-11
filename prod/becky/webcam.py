@@ -4,7 +4,8 @@ import cv2
 from config import current_config as config
 
 class Webcam:
-    """Asynchronous threaded version of webcam. Aim to provide higher fps"""
+    """Webcam with asynchronous threading support.
+    """
     def __init__(self):
         self.cam = cv2.VideoCapture(cv2.CAP_DSHOW)
 
@@ -54,29 +55,3 @@ class VideoClip:
     def release(self):
         self.cam.release()
         return
-
-
-# class Webcam:
-#     def __init__(self):
-#         self.cam = cv2.VideoCapture(cv2.CAP_DSHOW + 1)
-
-#         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, config.CAM_WIDTH)
-#         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, config.CAM_HEIGHT)
-#         self.cam.set(cv2.CAP_PROP_BRIGHTNESS, config.CAM_BRIGHTNESS)
-#         self.cam.set(cv2.CAP_PROP_CONTRAST, config.CAM_CONTRAST)
-#         self.cam.set(cv2.CAP_PROP_SATURATION, config.CAM_SATURATION)
-
-#         _, frame = self.cam.read()
-
-
-#     def read(self):
-#         ok, frame = self.cam.read()
-
-#         if not ok:
-#             raise Exception('Webcam feed broken')
-#         else:
-#             return frame
-
-#     def release(self):
-#         self.cam.release()
-#         return

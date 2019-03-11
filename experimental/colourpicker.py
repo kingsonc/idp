@@ -9,12 +9,12 @@ cv2.namedWindow('feed', cv2.WINDOW_NORMAL)
 cv2.namedWindow('filtered', cv2.WINDOW_NORMAL)
 cv2.resizeWindow('filtered', 600,300)
 
-cv2.createTrackbar('H_min','feed',0,179,empty_callback)
-cv2.createTrackbar('H_max','feed',0,179,empty_callback)
-cv2.createTrackbar('S_min','feed',0,255,empty_callback)
-cv2.createTrackbar('S_max','feed',0,255,empty_callback)
-cv2.createTrackbar('V_min','feed',0,255,empty_callback)
-cv2.createTrackbar('V_max','feed',0,255,empty_callback)
+cv2.createTrackbar('H_min','feed',60,179,empty_callback)
+cv2.createTrackbar('H_max','feed',95,179,empty_callback)
+cv2.createTrackbar('S_min','feed',100,255,empty_callback)
+cv2.createTrackbar('S_max','feed',255,255,empty_callback)
+cv2.createTrackbar('V_min','feed',40,255,empty_callback)
+cv2.createTrackbar('V_max','feed',255,255,empty_callback)
 
 USE_LIVE_CAM = False
 
@@ -22,9 +22,12 @@ if USE_LIVE_CAM:
     cap = cv2.VideoCapture(cv2.CAP_DSHOW + 1)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1600)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1200)
+    cap.set(cv2.CAP_PROP_BRIGHTNESS, 60)
+    cap.set(cv2.CAP_PROP_CONTRAST, 48)
+    cap.set(cv2.CAP_PROP_SATURATION, 70)
 else:
     # Open sample video
-    cap = cv2.VideoCapture('test_files/table3_sample.wmv')
+    cap = cv2.VideoCapture('test_files/output1.avi')
     frame_counter = 0
 
 while(True):

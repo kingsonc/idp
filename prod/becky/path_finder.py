@@ -71,9 +71,12 @@ class PathFinder:
 
         while True:
             # with self.variables_lock:
-            visible_fuelcells = self.visible_fuelcells_q.get()
-            start = self.robot_coords_q.get()
-            end = self.target_coords_q.get()
+            #   visible_fuelcells = self.visible_fuelcells_q.get()
+            #   start = self.robot_coords_q.get()
+            #   end = self.target_coords_q.get()
+            visible_fuelcells = []
+            start = (150,17)
+            end = (120,140)
 
             # If start or end positions do not exist, continue
             if not start or not end:
@@ -147,7 +150,8 @@ class PathFinder:
                          (current_node.position[1] - end_node.position[1])**2)
 
     def _verify_node(self, table, node):
-        # Check within table range and not obstacle
+        """ Check within table range and not obstacle
+        """
         conditions = (node.position[0] < 0 or node.position[0] >= len(table)
                       or node.position[1] < 0 or node.position[1] >= len(table)
                       or table[node.position[1]][node.position[0]])
@@ -171,7 +175,7 @@ class PathFinder:
 
         return path
 
-def plot_path(plot,path, pos, target):
+def plot_path(plot, path, pos, target):
     """Plot path onto map
     """
     for i in range(len(path)-1):

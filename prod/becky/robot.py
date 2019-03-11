@@ -14,6 +14,8 @@ class RobotState():
         self.visible = False
 
     def find_robot(self, frame):
+        """ Find position of robot through tracking green circle
+        """
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, config.GREEN_LOWER_THRESH, config.GREEN_UPPER_THRESH)
         masked = cv2.bitwise_and(frame, frame, mask=mask)
@@ -25,10 +27,11 @@ class RobotState():
         if circles is None:
             print("Robot not found.")
             self.visible = False
-            return 0
+            return None
         else:
             x_center, y_center, radius = circles[0,0]
-            # x_center = int(x_center)
+
+            # Empirical formula to remove parallex error due to height of robot
             x_center = int(x_center+(736.5-x_center)/9)
             y_center = int(y_center+(736.5-y_center)/9)
             coords_cm = vision.map_coord_to_cm((x_center,y_center))
@@ -52,17 +55,18 @@ class RobotState():
             return (0,0)
 
     def orientation(self):
-        if self.turning:
-            return self.last_orientation
-
-        if len(self.tracked_pts) <= 5:
+        """ Calculate current orientation based on previous position
+        """
+        if self.turning or len(self.tracked_pts) <= 5:
+            # Use previous orientation if currently turning or if insufficient
+            # path history
             return self.last_orientation
 
         dx = self.tracked_pts[0][0] - self.tracked_pts[5][0]
         dy = self.tracked_pts[0][1] - self.tracked_pts[5][1]
 
         mag = dx**2 + dy**2
-        if mag < 250:
+        if mag < 200:
             # print("Robot not moving")
             return self.last_orientation
 
@@ -71,5 +75,7 @@ class RobotState():
         return orientation
 
     def turn(self, new_orientation):
+        """ Override orientation if currently turning
+        """
         self.last_orientation = new_orientation
         self.turning = True

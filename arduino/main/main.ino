@@ -10,6 +10,7 @@ Adafruit_DCMotor *Motor_R = AFMS.getMotor(1);
 Adafruit_DCMotor *Motor_L = AFMS.getMotor(2);
 Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
 int spd = 0;
+bool tipped_already = false;
 
 //define switch and LED pins
 int SWITCH = 3;
@@ -193,7 +194,7 @@ void setup() {
   pinMode(photodiode,INPUT); 
   pinMode(MOV_LED,OUTPUT);
   pinMode(SWITCH, INPUT);
-  attachInterrupt(digitalPinToInterrupt(SWITCH), tip, RISING); 
+//  attachInterrupt(digitalPinToInterrupt(SWITCH), tip, RISING); 
   
   //initialise servo object and set to neutral
   myservo.attach(servo_pin);
@@ -237,28 +238,33 @@ void loop() {
   }
 
   //test block in working area
-  if (block_in_working_area == true) {
-    slow_movement();
-    for (int i=0; i<=600; i++){
-      bool check = hall_effect();
-      if(check==true){
-        is_magnetic = true;
-        break;
-      }
-      delay(1);
-    }
+//  if (block_in_working_area == true) {
+//    slow_movement();
+//    for (int i=0; i<=600; i++){
+//      bool check = hall_effect();
+//      if(check==true){
+//        is_magnetic = true;
+//        break;
+//      }
+//      delay(1);
+//    }
+//
+//    if(is_magnetic==false) {
+//      tipper_landing();
+//      servo_accept();
+//      tipper_liftoff();   //accept block, send serial
+//    } else if (is_magnetic == true) {
+//      servo_reject();     //reject block, send serial
+//    }
+//
+//    //reset
+//    is_magnetic = false;         
+//    block_in_working_area = false;  
+//    slow_movement();
+//  }
 
-    if(is_magnetic==false) {
-      tipper_landing();
-      servo_accept();
-      tipper_liftoff();   //accept block, send serial
-    } else if (is_magnetic == true) {
-      servo_reject();     //reject block, send serial
-    }
-
-    //reset
-    is_magnetic = false;         
-    block_in_working_area = false;  
-    slow_movement();
+  if (digitalRead(SWITCH) == HIGH && tipped_already == false) {
+    tip();
+    tipped_already = true;
   }
 }
