@@ -113,7 +113,7 @@ void stop_motors() {
 //Beam Break Testing Subroutine
 void beam_break() {
   int val = analogRead(photodiode);
-  if (val >= 415) {                                   //set threshold
+  if (val >= 380) {                                   //set threshold
 //       Serial.println("There is a block in the way!");
        block_in_working_area = true;
   }
@@ -125,7 +125,7 @@ void beam_break() {
 //Hall Effect Testing Subroutine
 bool hall_effect() {
   int magnetic = analogRead(hall_effect_pin);
-    if (magnetic >=300) {                          //set threshold
+    if (magnetic <=660) {                          //set threshold
       return true;
     } else {
       return false;
