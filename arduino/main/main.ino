@@ -10,7 +10,6 @@ Adafruit_DCMotor *Motor_R = AFMS.getMotor(1);
 Adafruit_DCMotor *Motor_L = AFMS.getMotor(2);
 Adafruit_DCMotor *Motor_Tip = AFMS.getMotor(3);
 int spd = 0;
-bool tipped_already = false;
 
 //define switch and LED pins
 int SWITCH = 3;
@@ -114,7 +113,7 @@ void stop_motors() {
 //Beam Break Testing Subroutine
 void beam_break() {
   int val = analogRead(photodiode);
-  if (val >= 380) {                                   //set threshold
+  if (val >= 390) {                                   //set threshold
 //       Serial.println("There is a block in the way!");
        block_in_working_area = true;
   }
@@ -138,7 +137,7 @@ void servo_accept(){
   slow_movement();
   myservo.write(40);
   //Serial.print("ACCEPT");
-  delay(2000); 
+  delay(2500); 
                           
   // sweep out
   for (int pos = 40; pos<=180; pos+=1){
@@ -148,6 +147,7 @@ void servo_accept(){
   myservo.write(180);
   stop_motors();
   delay(2000);
+  
   //reset servo
   myservo.write(85);
 }
@@ -194,7 +194,7 @@ void setup() {
   pinMode(photodiode,INPUT); 
   pinMode(MOV_LED,OUTPUT);
   pinMode(SWITCH, INPUT);
-//  attachInterrupt(digitalPinToInterrupt(SWITCH), tip, RISING); 
+  attachInterrupt(digitalPinToInterrupt(SWITCH), tip, RISING); 
   
   //initialise servo object and set to neutral
   myservo.attach(servo_pin);
@@ -238,33 +238,29 @@ void loop() {
   }
 
   //test block in working area
-//  if (block_in_working_area == true) {
-//    slow_movement();
-//    for (int i=0; i<=600; i++){
-//      bool check = hall_effect();
-//      if(check==true){
-//        is_magnetic = true;
-//        break;
-//      }
-//      delay(1);
-//    }
-//
-//    if(is_magnetic==false) {
-//      tipper_landing();
-//      servo_accept();
-//      tipper_liftoff();   //accept block, send serial
-//    } else if (is_magnetic == true) {
-//      servo_reject();     //reject block, send serial
-//    }
-//
-//    //reset
-//    is_magnetic = false;         
-//    block_in_working_area = false;  
-//    slow_movement();
-//  }
+  if (block_in_working_area == true) {
+    slow_movement();
+    for (int i=0; i<=600; i++){
+      bool check = hall_effect();
+      if(check==true){
+        is_magnetic = true;
+        break;
+      }
+      delay(1);
+    }
 
-  if (digitalRead(SWITCH) == HIGH && tipped_already == false) {
-    tip();
-    tipped_already = true;
+    if(is_magnetic==false) {
+      tipper_landing();
+      servo_accept();
+      delay(200);
+      tipper_liftoff();   //accept block, send serial
+    } else if (is_magnetic == true) {
+      servo_reject();     //reject block, send serial
+    }
+
+    //reset
+    is_magnetic = false;         
+    block_in_working_area = false;  
+    slow_movement();
   }
 }
