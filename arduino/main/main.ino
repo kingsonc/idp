@@ -13,6 +13,7 @@ int spd = 0;
 
 //define switch and LED pins
 int SWITCH = 3;
+bool tipped_already = false;
 int MOV_LED = 6;
 int STATE = LOW;
 
@@ -31,10 +32,12 @@ int servo_pin = 9;
 //define analog beam break input
 int photodiode=A0;
 bool block_in_working_area = false;
+int beam_threshold = 390;
 
 //define hall effect pin
 int hall_effect_pin=A1;
 bool is_magnetic=false;
+int mag_threshold = 660;
 
 //Serial Communications Protocol
 char delimiter = ',';
@@ -113,7 +116,7 @@ void stop_motors() {
 //Beam Break Testing Subroutine
 void beam_break() {
   int val = analogRead(photodiode);
-  if (val >= 390) {                                   //set threshold
+  if (val >= beam_threshold) {                                   //set threshold
 //       Serial.println("There is a block in the way!");
        block_in_working_area = true;
   }
@@ -125,7 +128,7 @@ void beam_break() {
 //Hall Effect Testing Subroutine
 bool hall_effect() {
   int magnetic = analogRead(hall_effect_pin);
-    if (magnetic <=660) {                          //set threshold
+    if (magnetic <= mag_threshold) {                          //set threshold
       return true;
     } else {
       return false;
@@ -144,10 +147,7 @@ void servo_accept(){
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(5);
   } 
-  myservo.write(180);
-  stop_motors();
-  delay(2000);
-  
+    
   //reset servo
   myservo.write(85);
 }
@@ -194,7 +194,10 @@ void setup() {
   pinMode(photodiode,INPUT); 
   pinMode(MOV_LED,OUTPUT);
   pinMode(SWITCH, INPUT);
-  attachInterrupt(digitalPinToInterrupt(SWITCH), tip, RISING); 
+
+  //auto-calibration
+  beam_threshold = analogRead(photodiode)+10;
+  mag_threshold = analogRead(hall_effect_pin)-20;
   
   //initialise servo object and set to neutral
   myservo.attach(servo_pin);
@@ -240,7 +243,7 @@ void loop() {
   //test block in working area
   if (block_in_working_area == true) {
     slow_movement();
-    for (int i=0; i<=600; i++){
+    for (int i=0; i<=650; i++){
       bool check = hall_effect();
       if(check==true){
         is_magnetic = true;
@@ -262,5 +265,13 @@ void loop() {
     is_magnetic = false;         
     block_in_working_area = false;  
     slow_movement();
+  }
+
+  if (digitalRead(SWITCH) == HIGH) {
+    if (tipped_already == false) {
+      tip();
+      tipped_already = true;
+      tipper_liftoff();
+    }
   }
 }
