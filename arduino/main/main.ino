@@ -91,10 +91,11 @@ void decoder(String cmd) {
 
 //define slow movement forwards
 void slow_movement() {
-    Motor_L->setSpeed(40);
-    Motor_R->setSpeed(40);
-    Motor_L->run(FORWARD);
-    Motor_R->run(FORWARD);
+  spd = 40;
+  Motor_L->setSpeed(40);
+  Motor_R->setSpeed(40);
+  Motor_L->run(FORWARD);
+  Motor_R->run(FORWARD);
 }
 
 //define slow reverse
@@ -107,6 +108,7 @@ void slow_pre_saturation() {
 
 //define motor stop
 void stop_motors() {
+  spd = 0;
   Motor_L->setSpeed(0);
   Motor_R->setSpeed(0);
   Motor_L->run(FORWARD);
@@ -195,8 +197,9 @@ void setup() {
   pinMode(SWITCH, INPUT);
 
   //auto-calibration
-  beam_threshold = analogRead(photodiode)+10;
+  beam_threshold = analogRead(photodiode)+5;
   mag_threshold = analogRead(hall_effect_pin)-20;
+  Serial.println(beam_threshold);
   
   //initialise servo object and set to neutral
   myservo.attach(servo_pin);
@@ -215,6 +218,7 @@ void setup() {
 }
 
 void loop() {
+  Serial.println(analogRead(photodiode));
   if (Serial.available() > 0) {
     //set new motor speed
     String rc = Serial.readStringUntil(end_delimiter);
@@ -235,7 +239,7 @@ void loop() {
   if(spd != 0){
       movement_LED.update(); //resume the ticker.
   }
-  if (spd == 0){
+  if(spd == 0){
       digitalWrite(MOV_LED, LOW);
   }
 
@@ -266,14 +270,12 @@ void loop() {
     slow_movement();
   }
 
-  if (digitalRead(SWITCH) == HIGH) {
-    if (tipped_already == false) {
-      tip();
-      tipped_already = true;
-      tipper_liftoff();
-      slow_movement();
-      delay(1000);
-      Serial.println("TIP");
-    }
+  if (digitalRead(SWITCH) == HIGH && tipped_already == false) {
+    tip();
+    tipped_already = true;
+    tipper_liftoff();
+    slow_movement();
+    delay(5000);
+    Serial.println("TIP");
   }
 }

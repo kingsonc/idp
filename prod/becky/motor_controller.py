@@ -36,7 +36,7 @@ def PIDController(robot_state, path):
         target_coord = path[target_idx]
     else:
         # At end of path, end and set at_target flag
-        target_coord = path[-1]
+        target_coord = path[0]
         return (0, 0, None, None, path[path_idx], target_coord, True)
 
     # Distance to target coordinate
@@ -79,7 +79,7 @@ def PIDController(robot_state, path):
             angle_diff = 360-angle_diff
 
         # Determine how long to turn for in milliseconds
-        turn_duration = int(angle_diff*43.5)    # 43.5 determined empirically
+        turn_duration = int(angle_diff*42)    # 43.5 determined empirically
 
         if ML < config.MIN_SPD:
             turn_cmd = "MTL" + str(turn_duration).zfill(4) + ','

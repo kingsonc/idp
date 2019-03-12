@@ -110,20 +110,26 @@ if __name__ == '__main__':
 
             # Move to next state when current path is complete
             if at_target:
+                print("end path")
                 at_target = False
                 if becky.state == "INITIAL":
                     becky.state = "SWEEP_1"
+
                 elif becky.state == "SWEEP_1":
-                    becky.state == "SWEEP_2"
+                    becky.state = "SWEEP_2"
+
                 elif becky.state == "SWEEP_2":
-                    becky.state == "SWEEP_3"
+                    becky.state = "SWEEP_3"
+
                 elif becky.state == "SWEEP_3":
-                    becky.state == "GO_TO_MIDDLE"
+                    becky.state = "GO_TO_MIDDLE"
+
                 elif becky.state == "GO_TO_MIDDLE":
                     becky.state = "REVERSE"
-                    # 180 degree turn to orientate for reversing
+                    # 90 degree turn to orientate for reversing
                     arduino.turn_cmd = "MTL3900,"
                     new_orientation = math.pi/2
+
                 elif becky.state == "REVERSE":
                     pass
 
@@ -147,10 +153,13 @@ if __name__ == '__main__':
                 becky.turn(new_orientation)
                 print("Sharp turn")
                 turn_cmd = None
-            else:
+            elif not turn_cmd:
                 # Send new speeds to Arduino
                 arduino.motor_L.speed = ML
                 arduino.motor_R.speed = MR
+            else:
+                time.sleep(0.01)
+                continue
 
         # Combine table simulation and actual camera input
         overall = np.hstack((table_plot,frame))
