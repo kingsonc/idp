@@ -142,7 +142,7 @@ void servo_accept(){
   slow_movement();
   myservo.write(40);
   //Serial.print("ACCEPT");
-  delay(2500); 
+  delay(1700); 
                           
   // sweep out
   for (int pos = 40; pos<=180; pos+=1){
@@ -245,7 +245,7 @@ void loop() {
   //test block in working area
   if (block_in_working_area == true) {
     slow_movement();
-    for (int i=0; i<=650; i++){
+    for (int i=0; i<=720; i++){
       bool check = hall_effect();
       if(check==true){
         is_magnetic = true;
@@ -255,9 +255,10 @@ void loop() {
     }
 
     if(is_magnetic==false) {
+      myservo.write(40);  
       tipper_landing();
       servo_accept();
-      delay(200);
+      delay(150);
       tipper_liftoff();   //accept block, send serial
     } else if (is_magnetic == true) {
       servo_reject();     //reject block, send serial
