@@ -171,7 +171,6 @@ void tip() {
   Motor_Tip->setSpeed(200);
   delay(500);
   Motor_Tip->run(RELEASE);
-  Serial.println("tipping");
 }
 
 void tipper_liftoff() {
@@ -272,6 +271,9 @@ void loop() {
       tip();
       tipped_already = true;
       tipper_liftoff();
+      slow_movement();
+      delay(1000);
+      Serial.println("TIP");
     }
   }
 }

@@ -67,6 +67,14 @@ if __name__ == '__main__':
                 becky.tracked_pts_cm.clear()
                 path = config.REVERSE_PATH
                 path_override = True
+        elif becky.state == "GO_HOME":
+            reversing = False
+            arduino.stop_reverse()
+            becky.tracked_pts.clear()
+            becky.tracked_pts_cm.clear()
+            path = config.GO_HOME_PATH
+            path_override = True
+
         # else:
         #     try:
         #         # Clear multiprocessing queues
@@ -110,6 +118,10 @@ if __name__ == '__main__':
                     new_orientation = math.pi/2
                 elif becky.state == "REVERSE":
                     pass
+
+            if arduino.tipped:
+                becky.state = "GO_HOME"
+                continue
 
             if reversing:
                 ML, MR = MR, ML

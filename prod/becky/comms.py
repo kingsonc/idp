@@ -22,6 +22,7 @@ class Arduino:
         self.wait_rcv = False
         self.turn_cmd = None
         self.turning = False
+        self.tipped = False
 
         self.running = True
         self.thread = threading.Thread(target=self.update, daemon=True)
@@ -37,6 +38,10 @@ class Arduino:
                     if 'TC' in str(line):
                         # Turning complete when 'TC' received
                         self.turning = False
+                    elif 'TIP' in str(line):
+                        # Tipper has tipped
+                        self.tipped = True
+
                     self.wait_rcv = False
             else:
                 # Send new commands if not waiting for Arduino
