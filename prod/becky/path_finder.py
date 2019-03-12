@@ -75,8 +75,8 @@ class PathFinder:
             #   start = self.robot_coords_q.get()
             #   end = self.target_coords_q.get()
             visible_fuelcells = []
-            start = (150,17)
-            end = (120,140)
+            start = (120,200)
+            end = (15,230)
 
             # If start or end positions do not exist, continue
             if not start or not end:

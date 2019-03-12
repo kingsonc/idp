@@ -33,7 +33,7 @@ if __name__ == '__main__':
     arduino = comms.Arduino('COM15')
 
     path = None
-    path_override = False
+    path_override = True
     reversing = False
 
     while True:
@@ -53,11 +53,14 @@ if __name__ == '__main__':
         # Choose current path
         if becky.state == "INITIAL":
             path = config.INITIAL_PATH
-            # path = config.TEST_PATH
-            path_override = True
+        elif becky.state == "SWEEP_1":
+            path = config.SWEEP_1_PATH
+        elif becky.state == "SWEEP_2":
+            path = config.SWEEP_2_PATH
+        elif becky.state == "SWEEP_3":
+            path = config.SWEEP_3_PATH
         elif becky.state == "GO_TO_MIDDLE":
             path = config.GO_MIDDLE_PATH
-            path_override = True
         elif becky.state == "REVERSE":
             if not reversing:
                 # Initial set up on first change to reversing
@@ -66,14 +69,13 @@ if __name__ == '__main__':
                 becky.tracked_pts.clear()
                 becky.tracked_pts_cm.clear()
                 path = config.REVERSE_PATH
-                path_override = True
         elif becky.state == "GO_HOME":
-            reversing = False
-            arduino.stop_reverse()
-            becky.tracked_pts.clear()
-            becky.tracked_pts_cm.clear()
-            path = config.GO_HOME_PATH
-            path_override = True
+            if reversing:
+                reversing = False
+                arduino.stop_reverse()
+                becky.tracked_pts.clear()
+                becky.tracked_pts_cm.clear()
+                path = config.GO_HOME_PATH
 
         # else:
         #     try:
@@ -110,11 +112,17 @@ if __name__ == '__main__':
             if at_target:
                 at_target = False
                 if becky.state == "INITIAL":
-                    becky.state = "GO_TO_MIDDLE"
+                    becky.state = "SWEEP_1"
+                elif becky.state == "SWEEP_1":
+                    becky.state == "SWEEP_2"
+                elif becky.state == "SWEEP_2":
+                    becky.state == "SWEEP_3"
+                elif becky.state == "SWEEP_3":
+                    becky.state == "GO_TO_MIDDLE"
                 elif becky.state == "GO_TO_MIDDLE":
                     becky.state = "REVERSE"
                     # 180 degree turn to orientate for reversing
-                    arduino.turn_cmd = "MTL7800,"
+                    arduino.turn_cmd = "MTL3900,"
                     new_orientation = math.pi/2
                 elif becky.state == "REVERSE":
                     pass
