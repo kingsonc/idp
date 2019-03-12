@@ -178,15 +178,15 @@ void tip() {
 void tipper_liftoff() {
   Motor_Tip->setSpeed(255);
   Motor_Tip->run(FORWARD);
-  delay(300);
+  delay(800);
   Motor_Tip->setSpeed(50);
 }
 
 void tipper_landing() {
   Motor_Tip->run(BACKWARD);
-  delay(100);
+  delay(800);
   Motor_Tip->run(RELEASE);
-  delay(300);
+  delay(500);
 }
 
 //Setup and Loop
