@@ -197,7 +197,7 @@ void setup() {
   pinMode(SWITCH, INPUT);
 
   //auto-calibration
-  beam_threshold = analogRead(photodiode)+5;
+  beam_threshold = analogRead(photodiode)+10;
   mag_threshold = analogRead(hall_effect_pin)-20;
   Serial.println(beam_threshold);
   
@@ -218,7 +218,6 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(analogRead(photodiode));
   if (Serial.available() > 0) {
     //set new motor speed
     String rc = Serial.readStringUntil(end_delimiter);
