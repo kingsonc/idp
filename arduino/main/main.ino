@@ -33,6 +33,7 @@ int servo_pin = 9;
 int photodiode=A0;
 bool block_in_working_area = false;
 int beam_threshold = 390;
+int block_counter = 23;
 
 //define hall effect pin
 int hall_effect_pin=A1;
@@ -45,7 +46,21 @@ char end_delimiter = '.';
 
 //Print new serial data
 void decoder(String cmd) {
-  if (cmd.charAt(0) == 'M') {
+  //turn anroud on spot and reverse
+  if (cmd.charAt(0) == 'R') {
+    block_counter = 0;
+    Motor_L->setSpeed(80);
+    Motor_R->setSpeed(80);
+    Motor_L->run(BACKWARD);
+    Motor_R->run(FORWARD);
+    delay(3500);
+    pre_saturation();
+    delay(3500);    
+    Serial.println("TC");
+  }
+
+  //usual protocol
+  else if (cmd.charAt(0) == 'M') {
     if (cmd.charAt(1) == 'T') {
       int duration = cmd.substring(3,7).toInt();
       if (cmd.charAt(2) == 'L') {
@@ -62,7 +77,9 @@ void decoder(String cmd) {
       delay(duration);
       Serial.println("TC");
       slow_movement();
-    } else {
+    }    
+    
+    else {
         spd = cmd.substring(3,6).toInt(); //slice bits 3-6 from serial (speed)
       
       //set motor speeds using commands received from serial
@@ -89,6 +106,7 @@ void decoder(String cmd) {
   }
 }
 
+
 //define slow movement forwards
 void slow_movement() {
   spd = 40;
@@ -98,10 +116,10 @@ void slow_movement() {
   Motor_R->run(FORWARD);
 }
 
-//define slow reverse
-void slow_pre_saturation() {
-    Motor_L->setSpeed(50);
-    Motor_R->setSpeed(50);
+//define reverse
+void pre_saturation() {
+    Motor_L->setSpeed(80);
+    Motor_R->setSpeed(80);
     Motor_L->run(BACKWARD);
     Motor_R->run(BACKWARD);
 }
@@ -117,14 +135,22 @@ void stop_motors() {
 
 //Beam Break Testing Subroutine
 void beam_break() {
-  int val = analogRead(photodiode);
-  if (val >= beam_threshold) {                                   //set threshold
+//  int val = analogRead(photodiode);
+  int count = 0;
+  while (analogRead(photodiode) >= beam_threshold) {                                   //set threshold
+    count++;
+    if (count>10) {
+      block_in_working_area = true;
+      break;
+    }
+  }
+  
 //       Serial.println("There is a block in the way!");
-       block_in_working_area = true;
-  }
-  else {
-        block_in_working_area=false;
-  }
+//       block_in_working_area = true;
+//  }
+//  else {
+//        block_in_working_area=false;
+//  }
 }
 
 //Hall Effect Testing Subroutine
@@ -179,6 +205,14 @@ void tipper_liftoff() {
   Motor_Tip->setSpeed(255);
   Motor_Tip->run(FORWARD);
   delay(800);
+  Motor_Tip->run(BACKWARD);
+  delay(30);
+  Motor_Tip->run(FORWARD);
+  delay(30);
+  Motor_Tip->run(BACKWARD);
+  delay(30);
+  Motor_Tip->run(FORWARD);
+  delay(150);
   Motor_Tip->setSpeed(50);
 }
 
@@ -199,8 +233,7 @@ void setup() {
   //auto-calibration
   beam_threshold = analogRead(photodiode)+10;
   mag_threshold = analogRead(hall_effect_pin)-20;
-  Serial.println(beam_threshold);
-  
+
   //initialise servo object and set to neutral
   myservo.attach(servo_pin);
   myservo.write(85);       
@@ -211,6 +244,7 @@ void setup() {
   tipper_landing();
   tipper_liftoff();
   Serial.begin(9600);                           //initialise serial
+  Serial.println(beam_threshold);
   Serial.setTimeout(500);
   Serial.write("READY");
 
@@ -233,6 +267,7 @@ void loop() {
 
   //test beam break and hall effect
   beam_break();
+  Serial.println(analogRead(photodiode));
 
   //if moving, set LED high
   if(spd != 0){
@@ -254,14 +289,18 @@ void loop() {
       delay(1);
     }
 
-    if(is_magnetic==false) {
+    if(is_magnetic==false && block_counter > 0) {
       myservo.write(40);  
       tipper_landing();
       servo_accept();
       delay(150);
       tipper_liftoff();   //accept block, send serial
-    } else if (is_magnetic == true) {
+      block_counter -= 1;
+    } 
+    
+    else if (is_magnetic == true) {
       servo_reject();     //reject block, send serial
+      block_counter -= 1;
     }
 
     //reset
