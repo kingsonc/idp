@@ -53,9 +53,9 @@ void decoder(String cmd) {
     Motor_R->setSpeed(80);
     Motor_L->run(BACKWARD);
     Motor_R->run(FORWARD);
-    delay(4500);
+    delay(4000);
     pre_saturation();
-    delay(6000);    
+    delay(30000);    
     Serial.println("TC");
   }
 

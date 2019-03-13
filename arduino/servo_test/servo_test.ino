@@ -45,9 +45,6 @@ void setup() {
   AFMS.begin();
   //myservo.write(85);
   myservo.write(60);
-  servo_accept();
-  myservo.write(60);
-  tip();
 }
 
 void loop() {
