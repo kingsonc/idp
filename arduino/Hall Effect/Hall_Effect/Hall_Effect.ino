@@ -1,4 +1,4 @@
-int analogPin = A0;     // Hall effect output voltage connected to A0
+int analogPin = A1;     // Hall effect output voltage connected to A0
 int val = 0;           // variable to store the value read
 
 void setup()

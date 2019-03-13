@@ -53,9 +53,9 @@ void decoder(String cmd) {
     Motor_R->setSpeed(80);
     Motor_L->run(BACKWARD);
     Motor_R->run(FORWARD);
-    delay(3500);
+    delay(4500);
     pre_saturation();
-    delay(3500);    
+    delay(6000);    
     Serial.println("TC");
   }
 
@@ -118,8 +118,8 @@ void slow_movement() {
 
 //define reverse
 void pre_saturation() {
-    Motor_L->setSpeed(80);
-    Motor_R->setSpeed(80);
+    Motor_L->setSpeed(90);
+    Motor_R->setSpeed(90);
     Motor_L->run(BACKWARD);
     Motor_R->run(BACKWARD);
 }
@@ -139,7 +139,7 @@ void beam_break() {
   int count = 0;
   while (analogRead(photodiode) >= beam_threshold) {                                   //set threshold
     count++;
-    if (count>10) {
+    if (count>5) {
       block_in_working_area = true;
       break;
     }
@@ -204,7 +204,7 @@ void tip() {
 void tipper_liftoff() {
   Motor_Tip->setSpeed(255);
   Motor_Tip->run(FORWARD);
-  delay(800);
+  delay(850);
   Motor_Tip->run(BACKWARD);
   delay(30);
   Motor_Tip->run(FORWARD);
@@ -212,7 +212,7 @@ void tipper_liftoff() {
   Motor_Tip->run(BACKWARD);
   delay(30);
   Motor_Tip->run(FORWARD);
-  delay(150);
+  delay(200);
   Motor_Tip->setSpeed(50);
 }
 
@@ -267,7 +267,7 @@ void loop() {
 
   //test beam break and hall effect
   beam_break();
-  Serial.println(analogRead(photodiode));
+  //Serial.println(analogRead(photodiode));
 
   //if moving, set LED high
   if(spd != 0){
